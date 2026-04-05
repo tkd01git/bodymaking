@@ -26,7 +26,3 @@
 Vercelの本番URLに合わせて
 `https://YOUR-VERCEL-DOMAIN/api/drive/callback`
 をGoogle Cloud Consoleに登録してください。
-
-
-
-

@@ -1,5 +1,5 @@
 
-import { getOAuth2Client } from './_utils.js';
+import { getOAuth2Client } from '../_utils.js';
 
 export default async function handler(req, res) {
   try {

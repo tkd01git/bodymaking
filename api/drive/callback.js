@@ -1,26 +1,31 @@
-
 import { getOAuth2Client } from '../_utils.js';
 
 export default async function handler(req, res) {
   try {
     const url = new URL(req.url, `https://${req.headers.host}`);
     const code = url.searchParams.get('code');
+
     if (!code) {
       res.statusCode = 400;
-      return res.end('Missing code');
+      res.end('Missing code');
+      return;
     }
 
     const oauth2Client = getOAuth2Client();
     const { tokens } = await oauth2Client.getToken(code);
 
-    const cookie = `liftflow_tokens=${encodeURIComponent(JSON.stringify(tokens))}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000`;
-    res.setHeader('Set-Cookie', cookie);
+    const cookie = `liftflow_tokens=${encodeURIComponent(
+      JSON.stringify(tokens)
+    )}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000`;
 
+    res.setHeader('Set-Cookie', cookie);
     res.statusCode = 302;
     res.setHeader('Location', '/');
     res.end();
   } catch (e) {
+    console.error('DRIVE CALLBACK ERROR:', e);
     res.statusCode = 500;
-    res.end(e.message);
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.end(`Drive callback failed: ${e.message}`);
   }
 }

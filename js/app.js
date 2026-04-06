@@ -58,8 +58,6 @@ const el = {
   historyComboCanvas: document.getElementById('historyComboCanvas'),
   trainingTrendCanvas: document.getElementById('trainingTrendCanvas'),
   openSetupBtn: document.getElementById('openSetupBtn'),
-  settingsBtn: document.getElementById('settingsBtn'),
-  settingsMenu: document.getElementById('settingsMenu'),
   driveSyncBtn: document.getElementById('driveSyncBtn'),
   setupModal: document.getElementById('setupModal'),
   saveProfileBtn: document.getElementById('saveProfileBtn'),
@@ -101,14 +99,6 @@ async function loadDriveDataOnStartup() {
   } catch (e) {
     console.error('Drive records load failed:', e);
   }
-}
-
-function toggleSettingsMenu() {
-  el.settingsMenu.classList.toggle('hidden');
-}
-
-function closeSettingsMenu() {
-  el.settingsMenu.classList.add('hidden');
 }
 
 function openSetupModal() {
@@ -176,11 +166,10 @@ function makeSuggestion(exerciseName) {
   const days = dateDiffDays(state.selectedDate, ex.lastDate);
   const goalSets = 3;
   const goalReps = ['サイドレイズ', 'ダンベルフライ'].includes(exerciseName) ? '10-15' : exerciseName === '懸垂' ? '6-10' : '5-8';
-  const tone = days < 2 ? 'Recovery Focus' : 'Progressive Load';
   const text = days < 2
     ? '前回の実施日が近いので、今日は無理に負荷を追わず、フォームの再現性と疲労管理を優先しましょう。'
     : '最近の推移は安定しているので、今日は質を保ちながら少しだけ総仕事量を伸ばす意識がおすすめです。';
-  return { goalSets, goalReps, tone, text };
+  return { goalSets, goalReps, text };
 }
 
 function makeRecoverySuggestion() {
@@ -663,26 +652,13 @@ el.restReset.addEventListener('click', () => {
 
 el.addSetBtn.addEventListener('click', addSetRecord);
 
-el.settingsBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-  toggleSettingsMenu();
-});
-
-document.addEventListener('click', (e) => {
-  if (!el.settingsMenu.contains(e.target) && e.target !== el.settingsBtn) {
-    closeSettingsMenu();
-  }
-});
-
 el.openSetupBtn.addEventListener('click', () => {
-  closeSettingsMenu();
   openSetupModal();
 });
 
 el.closeSetupBtn.addEventListener('click', closeSetupModal);
 
 el.driveSyncBtn.addEventListener('click', async () => {
-  closeSettingsMenu();
   try {
     const authRes = await window.driveApi.auth();
     if (authRes?.authUrl) {

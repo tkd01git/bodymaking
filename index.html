@@ -155,7 +155,7 @@
         <div class="card stack">
           <div class="section-title">Trend</div>
           <div class="chart-box">
-            <div class="chart-title">Volume × Avg Weight</div>
+            <div class="chart-title" id="trainingTrendTitle">Selected Exercise × Avg Weight</div>
             <canvas id="trainingTrendCanvas" width="380" height="220"></canvas>
           </div>
         </div>
@@ -181,15 +181,7 @@
           </div>
 
           <div style="min-width:160px;">
-            <select id="calendarMetricSelect">
-              <option value="total">総挙上量</option>
-              <option value="upper">上半身の総挙上量</option>
-              <option value="lower">下半身の総挙上量</option>
-              <option value="chest">胸の総挙上量</option>
-              <option value="shoulder">肩の総挙上量</option>
-              <option value="back">背中の総挙上量</option>
-              <option value="arms">腕の総挙上量</option>
-            </select>
+            <select id="calendarMetricSelect"></select>
           </div>
         </div>
         <div class="calendar-grid" id="calendarGrid"></div>
@@ -206,21 +198,13 @@
         <div class="calendar-header" style="margin-top:14px;">
           <div class="section-title" style="margin-bottom:0;">Summary</div>
           <div style="min-width:160px;">
-            <select id="summaryMetricSelect">
-              <option value="total">全身</option>
-              <option value="upper">上半身</option>
-              <option value="lower">下半身</option>
-              <option value="chest">胸</option>
-              <option value="shoulder">肩</option>
-              <option value="back">背中</option>
-              <option value="arms">腕</option>
-            </select>
+            <select id="summaryMetricSelect"></select>
           </div>
         </div>
 
         <div class="summary-grid">
           <div class="summary-box">
-            <div class="summary-label">総挙上量</div>
+            <div class="summary-label">総重量</div>
             <div class="summary-value" id="summaryVolume">-</div>
           </div>
           <div class="summary-box">
@@ -247,7 +231,7 @@
           </div>
         </div>
         <div class="chart-box">
-          <div class="chart-title">Total Volume × Avg Weight</div>
+          <div class="chart-title" id="historyTrendTitle">Selected Exercise × Avg Weight</div>
           <canvas id="historyComboCanvas" width="380" height="220"></canvas>
         </div>
       </div>

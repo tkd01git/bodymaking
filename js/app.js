@@ -223,6 +223,8 @@ async function refreshAiSuggestions() {
 }
 
 function renderExerciseOptions() {
+  if (!el.exerciseSelect) return;
+
   el.exerciseSelect.innerHTML = '';
   Object.entries(window.EXERCISES)
     .filter(([, v]) => v.group === state.selectedGroup)
@@ -243,7 +245,8 @@ function renderBodyMap() {
     if (node.tagName !== 'svg') node.setAttribute('fill', '#1f2937');
   });
 
-  window.EXERCISES[state.selectedExercise].target.forEach(id => {
+  const targets = window.EXERCISES[state.selectedExercise]?.target || [];
+  targets.forEach(id => {
     const node = document.getElementById(id);
     if (node) node.setAttribute('fill', '#ef4444');
   });
@@ -281,6 +284,8 @@ function renderSetRecords() {
 
 async function renderTraining() {
   const ex = window.EXERCISES[state.selectedExercise];
+  if (!ex) return;
+
   el.exerciseName.textContent = state.selectedExercise;
   el.lastPerformed.textContent = `前回実施: ${ex.lastDate}`;
   el.muscleNames.innerHTML = ex.muscles.map(m => `<span class="muscle-pill">${m}</span>`).join('');
@@ -520,6 +525,8 @@ async function addSetRecord() {
 }
 
 function initSelectors() {
+  if (!el.muscleGroupSelect) return;
+
   window.MUSCLE_GROUPS.forEach(g => {
     const opt = document.createElement('option');
     opt.value = g.value;
@@ -577,10 +584,12 @@ document.querySelectorAll('.segment').forEach(seg => seg.addEventListener('click
   renderHistorySummary();
 }));
 
-el.calendarMetricSelect.addEventListener('change', e => {
-  state.selectedCalendarMetric = e.target.value;
-  renderCalendar();
-});
+if (el.calendarMetricSelect) {
+  el.calendarMetricSelect.addEventListener('change', e => {
+    state.selectedCalendarMetric = e.target.value;
+    renderCalendar();
+  });
+}
 
 if (el.summaryMetricSelect) {
   el.summaryMetricSelect.addEventListener('change', e => {
@@ -624,19 +633,23 @@ if (el.prevChartBtn && el.nextChartBtn) {
   });
 }
 
-el.muscleGroupSelect.addEventListener('change', async e => {
-  state.selectedGroup = e.target.value;
-  renderExerciseOptions();
-  el.exerciseSelect.value = state.selectedExercise;
-  await renderTraining();
-  flashGold(el.suggestionCard);
-});
+if (el.muscleGroupSelect) {
+  el.muscleGroupSelect.addEventListener('change', async e => {
+    state.selectedGroup = e.target.value;
+    renderExerciseOptions();
+    el.exerciseSelect.value = state.selectedExercise;
+    await renderTraining();
+    flashGold(el.suggestionCard);
+  });
+}
 
-el.exerciseSelect.addEventListener('change', async e => {
-  state.selectedExercise = e.target.value;
-  await renderTraining();
-  flashGold(el.suggestionCard);
-});
+if (el.exerciseSelect) {
+  el.exerciseSelect.addEventListener('change', async e => {
+    state.selectedExercise = e.target.value;
+    await renderTraining();
+    flashGold(el.suggestionCard);
+  });
+}
 
 el.restMin.addEventListener('input', syncRestFromInput);
 el.restSec.addEventListener('input', syncRestFromInput);

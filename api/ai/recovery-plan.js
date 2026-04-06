@@ -36,7 +36,7 @@ ${JSON.stringify(body)}
 `;
 
     const completion = await client.chat.completions.create({
-      model: 'gpt-5.4-thinking',
+      model: 'gpt-4.1-mini',
       messages: [
         {
           role: 'system',

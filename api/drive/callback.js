@@ -30,4 +30,3 @@ export default async function handler(req, res) {
     res.end(e.message);
   }
 }
-こうなってますね。callback.js

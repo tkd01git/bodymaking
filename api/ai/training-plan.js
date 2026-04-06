@@ -15,7 +15,7 @@ export default async function handler(req, res) {
 {
   "goalSets": 数字または短い文字列,
   "goalReps": "5-8" のような短い文字列,
-  "text": "100字前後の日本語アドバイス"
+  "text": "100字前後の日本語アドバイス。加えて、論文や書籍の名前と、そこから得られるアドバイスの根拠となるデータの説明"
 }
 
 条件:
@@ -29,7 +29,7 @@ ${JSON.stringify(body)}
 `;
 
     const completion = await client.chat.completions.create({
-      model: 'gpt-4.1-mini',
+      model: 'gpt-5.4-thinking',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.9
     });

@@ -406,7 +406,9 @@ function renderHistorySummary() {
   el.summarySets.textContent = getSetCountForDate(date, filter) || '-';
 
   const aggregated = aggregateSeries(state.selectedHistoryRange);
-  drawDualChart(el.historyComboCanvas, aggregated.left, aggregated.right);
+  const leftWindow = getWindowedSeries(aggregated.left, state.chartOffset, state.chartWindowSize);
+  const rightWindow = getWindowedSeries(aggregated.right, state.chartOffset, state.chartWindowSize);
+  drawDualChart(el.historyComboCanvas, leftWindow, rightWindow);
 }
 
 function renderRootMode() {
@@ -582,6 +584,19 @@ if (el.summaryMetricSelect) {
     renderHistorySummary();
   });
 }
+
+el.prevChartBtn.addEventListener('click', () => {
+  const aggregated = aggregateSeries(state.selectedHistoryRange);
+  if (state.chartOffset + state.chartWindowSize < aggregated.left.length) {
+    state.chartOffset += state.chartWindowSize;
+    renderHistorySummary();
+  }
+});
+
+el.nextChartBtn.addEventListener('click', () => {
+  state.chartOffset = Math.max(0, state.chartOffset - state.chartWindowSize);
+  renderHistorySummary();
+});
 
 el.muscleGroupSelect.addEventListener('change', async e => {
   state.selectedGroup = e.target.value;

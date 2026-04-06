@@ -18,7 +18,7 @@ export default async function handler(req, res) {
 {
   "goalSets": 数字または短い文字列,
   "goalReps": "5-8" のような短い文字列,
-  "text": "100字前後の日本語アドバイス"
+  "text": "100字前後の日本語アドバイス+有益そうな事実を論文など信頼できるデータからとってくること"
 }
 
 条件:
@@ -30,6 +30,7 @@ export default async function handler(req, res) {
 - records の過去履歴を踏まえる
 - selectedExercise の内容も考慮する
 - JSON以外は返さない
+- 論文や書籍等を参考に、この100字程度の内容の出力の根拠となる話をきちんと調べた上で出力すること
 
 Input:
 ${JSON.stringify(body)}

@@ -17,34 +17,17 @@ export default async function handler(req, res) {
 
     const cookie = `liftflow_tokens=${encodeURIComponent(JSON.stringify(tokens))}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000`;
     res.setHeader('Set-Cookie', cookie);
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+
+    res.statusCode = 302;
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
-
-    const target = `/?v=${CACHE_VERSION}&t=${Date.now()}`;
-
-    res.statusCode = 200;
-    res.end(`
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="utf-8" />
-  <meta http-equiv="Cache-Control" content="no-store" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Redirecting...</title>
-</head>
-<body>
-  <script>
-    window.location.replace(${JSON.stringify(target)});
-  </script>
-  <p>Redirecting...</p>
-</body>
-</html>
-`);
+    res.setHeader('Location', `/?v=${CACHE_VERSION}`);
+    res.end();
   } catch (e) {
     res.statusCode = 500;
     res.setHeader('Cache-Control', 'no-store');
     res.end(e.message);
   }
 }
+こうなってますね。callback.js

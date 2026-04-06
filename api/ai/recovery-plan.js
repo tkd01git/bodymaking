@@ -7,8 +7,8 @@ export default async function handler(req, res) {
     const client = getOpenAI();
 
     const prompt = `
-あなたはスポーツ栄養アドバイザーです。
-入力された profile, selectedExercise, records をもとに、
+あなたは非常に優秀なスポーツ栄養アドバイザーです。ボディビルトレーナーとしての経験がたくさんあって、新しい人を育成しています。
+入力された profile, selectedExercise, records.json をもとに、
 次の JSON を日本語で返してください。
 
 {

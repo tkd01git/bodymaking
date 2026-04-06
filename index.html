@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LiftFlow</title>
-  <link rel="stylesheet" href="./css/styles.css?v=20260406-1" />
+  <link rel="stylesheet" href="./css/styles.css?v=20260406-2" />
 </head>
 <body>
   <div class="wrap">
@@ -129,12 +129,12 @@
             </div>
           </div>
 
-          <div class="inline">
-            <div>
+          <div class="inline time-inline">
+            <div class="time-field">
               <label>Min</label>
               <input type="number" id="restMin" min="0" value="2" class="time-input" />
             </div>
-            <div>
+            <div class="time-field">
               <label>Sec</label>
               <input type="number" id="restSec" min="0" max="59" value="0" class="time-input" />
             </div>
@@ -143,13 +143,19 @@
 
         <div class="card stack" id="recordCard">
           <div class="section-title">Set Entry</div>
-          <div class="record-grid">
-            <select id="setNumber"></select>
+          <div class="record-grid compact-record-grid">
             <select id="repNumber"></select>
             <select id="weightNumber"></select>
             <button class="primary" id="addSetBtn">Confirm</button>
           </div>
-          <div class="record-list" id="setRecords"></div>
+
+          <div class="record-history-toggle-wrap">
+            <button id="toggleRecordHistoryBtn" class="mini-btn record-history-toggle" type="button">Show Set History</button>
+          </div>
+
+          <div id="recordHistoryPanel" class="record-history-panel hidden">
+            <div class="record-list" id="setRecords"></div>
+          </div>
         </div>
 
         <div class="card stack">
@@ -265,11 +271,11 @@
     </div>
   </div>
 
-  <script src="./js/constants.js?v=20260406-1"></script>
-  <script src="./js/sampleData.js?v=20260406-1"></script>
-  <script src="./js/helpers.js?v=20260406-1"></script>
-  <script src="./js/drive.js?v=20260406-1"></script>
-  <script src="./js/ai.js?v=20260406-1"></script>
-  <script src="./js/app.js?v=20260406-1"></script>
+  <script src="./js/constants.js?v=20260406-2"></script>
+  <script src="./js/sampleData.js?v=20260406-2"></script>
+  <script src="./js/helpers.js?v=20260406-2"></script>
+  <script src="./js/drive.js?v=20260406-2"></script>
+  <script src="./js/ai.js?v=20260406-2"></script>
+  <script src="./js/app.js?v=20260406-2"></script>
 </body>
 </html>

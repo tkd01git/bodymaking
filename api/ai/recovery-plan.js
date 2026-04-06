@@ -10,13 +10,13 @@ export default async function handler(req, res) {
     const client = getOpenAI();
 
     const prompt = `
-あなたは筋力トレーニングの日本語コーチです。ボディビルダーをたくさん見てきた経験があり、今一人の生徒を育成しているところです。
-入力された profile, selectedExercise, records.json をもとに、
+あなたは非常に優秀なスポーツ栄養アドバイザーです。
+ボディメイクや筋力トレーニングを行う人に対して、回復・栄養・休養の観点から、短く実用的な助言を日本語で行います。
+
+入力された profile, selectedExercise, records をもとに、
 次の JSON を日本語で返してください。
 
 {
-  "goalSets": 数字または短い文字列,
-  "goalReps": "5-8" のような短い文字列,
   "text": "100字前後の日本語アドバイス"
 }
 
@@ -24,10 +24,11 @@ export default async function handler(req, res) {
 - 必ず日本語で返す
 - 毎回少し違う言い回しにする
 - variationSeed を参考に表現を少し変える
-- 常に根拠ベースで、学生にとって現実的で実行しやすい提案にする
 - profile の身体データや目標を考慮する
-- records の過去履歴を踏まえる
+- records の過去履歴を踏まえて助言する
 - selectedExercise の内容も考慮する
+- 現実的で具体的な助言にする
+- 長すぎず、すぐ行動に移せる内容にする
 - JSON以外は返さない
 
 Input:
@@ -39,7 +40,7 @@ ${JSON.stringify(body)}
       messages: [
         {
           role: 'system',
-          content: 'あなたは日本語で簡潔に答える筋力トレーニングコーチです。必ずJSONのみを返してください。'
+          content: 'あなたは日本語で簡潔に答えるスポーツ栄養アドバイザーです。必ずJSONのみを返してください。'
         },
         {
           role: 'user',
@@ -56,9 +57,7 @@ ${JSON.stringify(body)}
       parsed = JSON.parse(text);
     } catch {
       parsed = {
-        goalSets: 3,
-        goalReps: '5-8',
-        text: '直近の履歴を踏まえると、今日はフォームを保ちながら基本セットを丁寧に積む方針がおすすめです。'
+        text: '今日は回復を優先して、睡眠と食事を丁寧に整えましょう。'
       };
     }
 

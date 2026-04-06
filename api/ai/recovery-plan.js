@@ -1,4 +1,6 @@
-import { getOpenAI, json, readBody } from '../_utils.js';
+import { callGeminiJson, json, readBody } from '../_utils.js';
+
+const GEMINI_MODEL = 'gemini-2.5-flash';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -7,7 +9,6 @@ export default async function handler(req, res) {
 
   try {
     const body = await readBody(req);
-    const client = getOpenAI();
 
     const prompt = `
 あなたは非常に優秀なスポーツ栄養アドバイザーです。
@@ -35,45 +36,32 @@ Input:
 ${JSON.stringify(body)}
 `;
 
-    const completion = await client.chat.completions.create({
-      model: 'gpt-4.1-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'あなたは日本語で簡潔に答えるスポーツ栄養アドバイザーです。必ずJSONのみを返してください。'
+    const parsed = await callGeminiJson({
+      model: GEMINI_MODEL,
+      prompt,
+      schema: {
+        type: 'OBJECT',
+        properties: {
+          text: { type: 'STRING' }
         },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      temperature: 0.9
+        required: ['text']
+      }
     });
-
-    const text = completion.choices?.[0]?.message?.content || '{}';
-
-    let parsed;
-    try {
-      parsed = JSON.parse(text);
-    } catch {
-      parsed = {
-        text: '今日は回復を優先して、睡眠と食事を丁寧に整えましょう。'
-      };
-    }
 
     return json(res, 200, parsed);
   } catch (e) {
-    console.error('AI endpoint error:', {
+    console.error('Gemini recovery endpoint error:', {
       message: e?.message,
       status: e?.status,
-      name: e?.name,
-      responseData: e?.response?.data,
+      responseText: e?.responseText,
       stack: e?.stack
     });
 
-    return json(res, 500, {
+    const status = e?.status || 500;
+
+    return json(res, status, {
       error: e?.message || 'Unknown error',
-      status: e?.status || 500
+      status
     });
   }
 }

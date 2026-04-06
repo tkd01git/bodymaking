@@ -1,4 +1,6 @@
-import { getOpenAI, json, readBody } from '../_utils.js';
+import { callGeminiJson, json, readBody } from '../_utils.js';
+
+const GEMINI_MODEL = 'gemini-2.5-flash';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -7,7 +9,6 @@ export default async function handler(req, res) {
 
   try {
     const body = await readBody(req);
-    const client = getOpenAI();
 
     const prompt = `
 あなたは筋力トレーニングの日本語コーチです。ボディビルダーをたくさん見てきた経験があり、今一人の生徒を育成しているところです。
@@ -34,47 +35,34 @@ Input:
 ${JSON.stringify(body)}
 `;
 
-    const completion = await client.chat.completions.create({
-      model: 'gpt-4.1-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'あなたは日本語で簡潔に答える筋力トレーニングコーチです。必ずJSONのみを返してください。'
+    const parsed = await callGeminiJson({
+      model: GEMINI_MODEL,
+      prompt,
+      schema: {
+        type: 'OBJECT',
+        properties: {
+          goalSets: { type: 'STRING' },
+          goalReps: { type: 'STRING' },
+          text: { type: 'STRING' }
         },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      temperature: 0.9
+        required: ['goalSets', 'goalReps', 'text']
+      }
     });
-
-    const text = completion.choices?.[0]?.message?.content || '{}';
-
-    let parsed;
-    try {
-      parsed = JSON.parse(text);
-    } catch {
-      parsed = {
-        goalSets: 3,
-        goalReps: '5-8',
-        text: '直近の履歴を踏まえると、今日はフォームを保ちながら基本セットを丁寧に積む方針がおすすめです。'
-      };
-    }
 
     return json(res, 200, parsed);
   } catch (e) {
-    console.error('AI endpoint error:', {
+    console.error('Gemini training endpoint error:', {
       message: e?.message,
       status: e?.status,
-      name: e?.name,
-      responseData: e?.response?.data,
+      responseText: e?.responseText,
       stack: e?.stack
     });
 
-    return json(res, 500, {
+    const status = e?.status || 500;
+
+    return json(res, status, {
       error: e?.message || 'Unknown error',
-      status: e?.status || 500
+      status
     });
   }
 }

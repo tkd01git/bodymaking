@@ -425,21 +425,40 @@ function renderRest() {
 function notifyRestEnd() {
   try {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
+
     if (AudioCtx) {
       const ctx = new AudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = 720;
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.35);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.36);
+
+      const playTone = (freq, start, duration) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'square';
+        osc.frequency.value = freq;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(0.12, start + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+
+        osc.start(start);
+        osc.stop(start + duration);
+      };
+
+      const now = ctx.currentTime;
+      playTone(880, now, 0.18);
+      playTone(1174, now + 0.18, 0.18);
+      playTone(1568, now + 0.36, 0.28);
     }
-  } catch (e) {}
+  } catch (e) {
+    console.error(e);
+  }
+
+  if (navigator.vibrate) {
+    navigator.vibrate([150, 80, 150, 80, 250]);
+  }
+
   flashGold(el.timerCard);
 }
 

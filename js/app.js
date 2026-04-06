@@ -75,6 +75,28 @@ function saveProfileLocal(profile) {
   localStorage.setItem('liftflow-profile', JSON.stringify(profile));
 }
 
+async function loadDriveDataOnStartup() {
+  try {
+    const profileRes = await window.driveApi.loadProfile();
+    if (profileRes?.profile) {
+      state.profile = profileRes.profile;
+      localStorage.setItem('liftflow-profile', JSON.stringify(state.profile));
+    }
+  } catch (e) {
+    console.error('Drive profile load failed:', e);
+  }
+
+  try {
+    const recordsRes = await window.driveApi.loadRecords();
+    if (recordsRes?.records) {
+      state.setRecords = recordsRes.records;
+      localStorage.setItem('liftflow-set-records', JSON.stringify(state.setRecords));
+    }
+  } catch (e) {
+    console.error('Drive records load failed:', e);
+  }
+}
+
 function toggleSettingsMenu() {
   el.settingsMenu.classList.toggle('hidden');
 }
@@ -537,6 +559,21 @@ function initSelectors() {
   }
 }
 
+async function initializeApp() {
+  await loadDriveDataOnStartup();
+
+  initSelectors();
+  syncRestFromInput();
+  renderRootMode();
+  await renderTraining();
+  renderCalendar();
+  renderHistorySummary();
+
+  if (!state.profile || (!state.profile.height && !localStorage.getItem('liftflow-profile'))) {
+    openSetupModal();
+  }
+}
+
 document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
   state.rootMode = tab.dataset.tab;
   renderRootMode();
@@ -633,13 +670,4 @@ el.saveProfileBtn.addEventListener('click', async () => {
   await refreshAiSuggestions();
 });
 
-initSelectors();
-syncRestFromInput();
-renderRootMode();
-renderTraining();
-renderCalendar();
-renderHistorySummary();
-
-if (!localStorage.getItem('liftflow-profile')) {
-  openSetupModal();
-}
+initializeApp();

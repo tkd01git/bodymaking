@@ -1,14 +1,19 @@
 import { getOpenAI, json, readBody } from '../_utils.js';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed' });
+  if (req.method !== 'POST') {
+    return json(res, 405, { error: 'Method not allowed' });
+  }
+
   try {
     const body = await readBody(req);
     const client = getOpenAI();
 
     const prompt = `
-あなたは非常に優秀なスポーツ栄養アドバイザーです。ボディビルトレーナーとしての経験がたくさんあって、新しい人を育成しています。
-入力された profile, selectedExercise, records.json をもとに、
+あなたは非常に優秀なスポーツ栄養アドバイザーです。
+ボディメイクや筋力トレーニングを行う人に対して、回復・栄養・休養の観点から、短く実用的な助言を日本語で行います。
+
+入力された profile, selectedExercise, records をもとに、
 次の JSON を日本語で返してください。
 
 {
@@ -16,9 +21,14 @@ export default async function handler(req, res) {
 }
 
 条件:
+- 必ず日本語で返す
 - 毎回少し違う言い回しにする
 - variationSeed を参考に表現を少し変える
-- 現実的な提案にする。具体的には、これまでrecords.jsonで見てきたデータがあると思いますが、その内容をきちんと踏まえたり、最新の論文をきちんと追いながら、正確なアドバイスをなるべく具体的にすること。
+- profile の身体データや目標を考慮する
+- records の過去履歴を踏まえて助言する
+- selectedExercise の内容も考慮する
+- 現実的で具体的な助言にする
+- 長すぎず、すぐ行動に移せる内容にする
 - JSON以外は返さない
 
 Input:
@@ -26,14 +36,31 @@ ${JSON.stringify(body)}
 `;
 
     const completion = await client.chat.completions.create({
-      model: 'gpt-4.1-mini',
-      messages: [{ role: 'user', content: prompt }],
+      model: 'gpt-5.4-thinking',
+      messages: [
+        {
+          role: 'system',
+          content: 'あなたは日本語で簡潔に答えるスポーツ栄養アドバイザーです。必ずJSONのみを返してください。'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
       temperature: 0.9
     });
 
     const text = completion.choices?.[0]?.message?.content || '{}';
+
     let parsed;
-    try { parsed = JSON.parse(text); } catch { parsed = { protein: 120, water: 2.5, sleep: 7.5, carb: 3, text: text }; }
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      parsed = {
+        text: '今日は回復を優先して、睡眠と食事を丁寧に整えましょう。'
+      };
+    }
+
     return json(res, 200, parsed);
   } catch (e) {
     return json(res, 500, { error: e.message });

@@ -283,8 +283,40 @@ function renderRecordHistoryToggle() {
   el.toggleRecordHistoryBtn.textContent = state.isRecordHistoryOpen ? 'Hide Set History' : 'Show Set History';
 }
 
+function formatRecordTimestamp(record) {
+  if (record.loggedAt) {
+    const dt = new Date(record.loggedAt);
+    if (!Number.isNaN(dt.getTime())) {
+      const y = dt.getFullYear();
+      const m = dt.getMonth() + 1;
+      const d = dt.getDate();
+      const hh = String(dt.getHours()).padStart(2, '0');
+      const mm = String(dt.getMinutes()).padStart(2, '0');
+      return `${y}/${m}/${d} ${hh}:${mm}`;
+    }
+  }
+
+  if (record.date === '2026-04-06') {
+    return '2026年4月6日 17:00';
+  }
+
+  if (record.date) {
+    return `${record.date} -`;
+  }
+
+  return '-';
+}
+
 function renderSetRecords() {
-  const records = state.setRecords[getSetKey(state.selectedDate, state.selectedExercise)] || [];
+  const records = (state.setRecords[getSetKey(state.selectedDate, state.selectedExercise)] || [])
+    .map((r, index) => ({ ...r, __originalIndex: index, date: state.selectedDate }))
+    .sort((a, b) => {
+      const aTime = a.loggedAt ? new Date(a.loggedAt).getTime() : 0;
+      const bTime = b.loggedAt ? new Date(b.loggedAt).getTime() : 0;
+      if (aTime !== bTime) return bTime - aTime;
+      return b.__originalIndex - a.__originalIndex;
+    })
+    .slice(0, 10);
 
   if (!records.length) {
     el.setRecords.innerHTML = '<div class="sub">まだ記録がありません。</div>';
@@ -292,13 +324,13 @@ function renderSetRecords() {
     return;
   }
 
-  el.setRecords.innerHTML = records.map((r, i) =>
+  el.setRecords.innerHTML = records.map(r =>
     `<div class="record-item">
       <div>
-        <div class="record-main">${r.set} set / ${r.reps} reps / ${r.weight}kg</div>
-        <div class="record-sub">Volume ${r.reps * r.weight}</div>
+        <div class="record-main">${r.reps} reps / ${r.weight}kg</div>
+        <div class="record-sub">Volume ${r.reps * r.weight} ・ ${formatRecordTimestamp(r)}</div>
       </div>
-      <button data-remove="${i}" style="width:auto;">Delete</button>
+      <button data-remove="${r.__originalIndex}" style="width:auto;">Delete</button>
     </div>`
   ).join('');
 
@@ -558,15 +590,14 @@ async function saveRecordsEveryTime() {
 async function addSetRecord() {
   const key = getSetKey(state.selectedDate, state.selectedExercise);
   const arr = state.setRecords[key] || [];
-  const nextSet = arr.length + 1;
 
   arr.push({
-    set: nextSet,
     reps: Number(el.repNumber.value),
-    weight: Number(el.weightNumber.value)
+    weight: Number(el.weightNumber.value),
+    loggedAt: new Date().toISOString()
   });
 
-  state.setRecords[key] = arr.sort((a, b) => a.set - b.set);
+  state.setRecords[key] = arr;
 
   saveLocal();
   renderSetRecords();

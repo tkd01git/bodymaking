@@ -40,10 +40,6 @@ const el = {
   recordCard: document.getElementById('recordCard'),
   timerCard: document.getElementById('timerCard'),
   suggestionCard: document.getElementById('suggestionCard'),
-  proteinGoal: document.getElementById('proteinGoal'),
-  waterGoal: document.getElementById('waterGoal'),
-  sleepGoal: document.getElementById('sleepGoal'),
-  carbGoal: document.getElementById('carbGoal'),
   dailyAiText: document.getElementById('dailyAiText'),
   calendarGrid: document.getElementById('calendarGrid'),
   calendarMetricSelect: document.getElementById('calendarMetricSelect'),
@@ -172,18 +168,10 @@ function makeSuggestion(exerciseName) {
 
 function makeRecoverySuggestion() {
   const todayVol = getTotalVolumeForDate(state.selectedDate);
-  const protein = todayVol > 0 ? 140 : 120;
-  const water = todayVol > 0 ? 3.0 : 2.5;
-  const sleep = todayVol > 0 ? 8.0 : 7.5;
-  const carb = todayVol > 1800 ? 5 : todayVol > 1000 ? 4 : 3;
   return {
-    protein,
-    water,
-    sleep,
-    carb,
     text: todayVol > 0
-      ? 'Based on today’s logged work, prioritize carbs, hydration, and protein for recovery.'
-      : 'Base recovery target for a lighter or non-training day.'
+      ? '今日の負荷を踏まえると、回復を優先して睡眠と食事を丁寧に整えるのがおすすめです。'
+      : '今日は軽めなので、無理をせず体調管理を優先して次回に備えましょう。'
   };
 }
 
@@ -210,17 +198,9 @@ async function refreshAiSuggestions() {
 
   try {
     const recovery = await window.aiApi.getRecoveryPlan(payload);
-    el.proteinGoal.textContent = `${recovery.protein}g`;
-    el.waterGoal.textContent = `${recovery.water}L`;
-    el.sleepGoal.textContent = `${recovery.sleep}h`;
-    el.carbGoal.textContent = `${recovery.carb}合`;
     el.dailyAiText.textContent = recovery.text ?? '';
   } catch (_) {
     const fallback = makeRecoverySuggestion();
-    el.proteinGoal.textContent = `${fallback.protein}g`;
-    el.waterGoal.textContent = `${fallback.water}L`;
-    el.sleepGoal.textContent = `${fallback.sleep}h`;
-    el.carbGoal.textContent = `${fallback.carb}合`;
     el.dailyAiText.textContent = fallback.text;
   }
 }

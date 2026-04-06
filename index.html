@@ -11,21 +11,20 @@
     <div class="hero">
       <div>
         <h1>LiftFlow</h1>
-        
+      </div>
+
+      <div class="hero-settings">
+        <button id="settingsBtn" class="icon-btn" aria-label="Settings">⚙</button>
+        <div id="settingsMenu" class="settings-menu hidden">
+          <button id="openSetupBtn">Initial Setup</button>
+          <button id="driveSyncBtn">Drive Sync</button>
+        </div>
       </div>
     </div>
 
     <div class="tabs">
       <button class="tab active" data-tab="record">Training</button>
       <button class="tab" data-tab="history">History</button>
-    </div>
-
-    <div class="topbar">
-      <button id="settingsBtn" class="icon-btn" aria-label="Settings">⚙</button>
-      <div id="settingsMenu" class="settings-menu hidden">
-        <button id="openSetupBtn">Initial Setup</button>
-        <button id="driveSyncBtn">Drive Sync</button>
-      </div>
     </div>
 
     <div id="record-root">
@@ -51,6 +50,7 @@
               <h2 id="exerciseName">-</h2>
               <div id="lastPerformed" class="sub">Previous: -</div>
             </div>
+
             <div class="body-map-inline">
               <div class="body-map-card">
                 <div class="body-map-label">Front</div>
@@ -70,6 +70,7 @@
                   <rect x="76" y="164" width="14" height="70" rx="7" fill="#192231" stroke="#2b3646"/>
                 </svg>
               </div>
+
               <div class="body-map-card">
                 <div class="body-map-label">Back</div>
                 <svg id="backBody" viewBox="0 0 140 260" width="100%" height="138">
@@ -89,11 +90,20 @@
                 </svg>
               </div>
             </div>
+
             <div id="muscleNames" class="muscle-list"></div>
+
             <div class="goal-grid">
-              <div class="goal-box"><div class="goal-label">Sets</div><div class="goal-value" id="goalSets">-</div></div>
-              <div class="goal-box"><div class="goal-label">Reps</div><div class="goal-value" id="goalReps">-</div></div>
+              <div class="goal-box">
+                <div class="goal-label">Sets</div>
+                <div class="goal-value" id="goalSets">-</div>
+              </div>
+              <div class="goal-box">
+                <div class="goal-label">Reps</div>
+                <div class="goal-value" id="goalReps">-</div>
+              </div>
             </div>
+
             <div class="ai-box" id="aiSuggestionText">Plan text</div>
           </div>
         </div>
@@ -101,12 +111,24 @@
         <div class="card stack" id="timerCard">
           <div class="section-title">Rest Timer</div>
           <div class="timer-mini">
-            <div class="timer-left"><div class="timer-time" id="restDisplay">02:00</div></div>
-            <div class="mini-actions"><button class="mini-btn" id="restStart">Start</button><button class="mini-btn" id="restReset">Reset</button></div>
+            <div class="timer-left">
+              <div class="timer-time" id="restDisplay">02:00</div>
+            </div>
+            <div class="mini-actions">
+              <button class="mini-btn" id="restStart">Start</button>
+              <button class="mini-btn" id="restReset">Reset</button>
+            </div>
           </div>
+
           <div class="inline">
-            <div><label>Min</label><input type="number" id="restMin" min="0" value="2" class="time-input" /></div>
-            <div><label>Sec</label><input type="number" id="restSec" min="0" max="59" value="0" class="time-input" /></div>
+            <div>
+              <label>Min</label>
+              <input type="number" id="restMin" min="0" value="2" class="time-input" />
+            </div>
+            <div>
+              <label>Sec</label>
+              <input type="number" id="restSec" min="0" max="59" value="0" class="time-input" />
+            </div>
           </div>
         </div>
 
@@ -123,16 +145,31 @@
 
         <div class="card stack">
           <div class="section-title">Trend</div>
-          <div class="chart-box"><div class="chart-title">Volume × Avg Weight</div><canvas id="trainingTrendCanvas" width="380" height="220"></canvas></div>
+          <div class="chart-box">
+            <div class="chart-title">Volume × Avg Weight</div>
+            <canvas id="trainingTrendCanvas" width="380" height="220"></canvas>
+          </div>
         </div>
 
         <div class="card stack" id="recoveryCard">
           <div class="section-title">Recovery Plan</div>
           <div class="summary-grid">
-            <div class="summary-box"><div class="summary-label">Protein</div><div class="summary-value" id="proteinGoal">120g</div></div>
-            <div class="summary-box"><div class="summary-label">Water</div><div class="summary-value" id="waterGoal">2.5L</div></div>
-            <div class="summary-box"><div class="summary-label">Sleep</div><div class="summary-value" id="sleepGoal">7.5h</div></div>
-            <div class="summary-box"><div class="summary-label">Carbs</div><div class="summary-value" id="carbGoal">4合</div></div>
+            <div class="summary-box">
+              <div class="summary-label">Protein</div>
+              <div class="summary-value" id="proteinGoal">120g</div>
+            </div>
+            <div class="summary-box">
+              <div class="summary-label">Water</div>
+              <div class="summary-value" id="waterGoal">2.5L</div>
+            </div>
+            <div class="summary-box">
+              <div class="summary-label">Sleep</div>
+              <div class="summary-value" id="sleepGoal">7.5h</div>
+            </div>
+            <div class="summary-box">
+              <div class="summary-label">Carbs</div>
+              <div class="summary-value" id="carbGoal">4合</div>
+            </div>
           </div>
           <div class="ai-box" id="dailyAiText">Recovery text</div>
         </div>
@@ -144,7 +181,7 @@
         <div class="calendar-header">
           <div>
             <div class="section-title">Calendar</div>
-            <div class="sub">March 2026 sample data</div>
+            <div class="sub" id="calendarMonthLabel"></div>
           </div>
           <div style="min-width:160px;">
             <select id="calendarMetricSelect">
@@ -171,18 +208,47 @@
       </div>
 
       <div class="card stack">
-        <div class="section-title">Summary</div>
+        <div class="calendar-header">
+          <div class="section-title">Summary</div>
+          <div style="min-width:160px;">
+            <select id="summaryMetricSelect">
+              <option value="total">全身</option>
+              <option value="upper">上半身</option>
+              <option value="lower">下半身</option>
+              <option value="chest">胸</option>
+              <option value="shoulder">肩</option>
+              <option value="back">背中</option>
+              <option value="arms">腕</option>
+            </select>
+          </div>
+        </div>
+
         <div class="summary-grid">
-          <div class="summary-box"><div class="summary-label">総挙上量</div><div class="summary-value" id="summaryVolume">-</div></div>
-          <div class="summary-box"><div class="summary-label">Avg Weight</div><div class="summary-value" id="summaryAvgWeight">-</div></div>
-          <div class="summary-box"><div class="summary-label">Total Reps</div><div class="summary-value" id="summaryReps">-</div></div>
-          <div class="summary-box"><div class="summary-label">Sets</div><div class="summary-value" id="summarySets">-</div></div>
+          <div class="summary-box">
+            <div class="summary-label">総挙上量</div>
+            <div class="summary-value" id="summaryVolume">-</div>
+          </div>
+          <div class="summary-box">
+            <div class="summary-label">平均重量</div>
+            <div class="summary-value" id="summaryAvgWeight">-</div>
+          </div>
+          <div class="summary-box">
+            <div class="summary-label">総回数</div>
+            <div class="summary-value" id="summaryReps">-</div>
+          </div>
+          <div class="summary-box">
+            <div class="summary-label">セット数</div>
+            <div class="summary-value" id="summarySets">-</div>
+          </div>
         </div>
       </div>
 
       <div class="card stack">
         <div class="section-title">Trend</div>
-        <div class="chart-box"><div class="chart-title">Total Volume × Avg Weight</div><canvas id="historyComboCanvas" width="380" height="220"></canvas></div>
+        <div class="chart-box">
+          <div class="chart-title">Total Volume × Avg Weight</div>
+          <canvas id="historyComboCanvas" width="380" height="220"></canvas>
+        </div>
       </div>
     </div>
   </div>
@@ -194,7 +260,8 @@
       <div class="setup-grid">
         <div><label>Height (cm)</label><input id="profileHeight" type="number" /></div>
         <div><label>Weight (kg)</label><input id="profileWeight" type="number" /></div>
-        <div><label>Goal</label>
+        <div>
+          <label>Goal</label>
           <select id="profileGoal">
             <option value="hypertrophy">筋肥大</option>
             <option value="strength">筋力向上</option>

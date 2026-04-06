@@ -13,12 +13,21 @@
         <h1>LiftFlow</h1>
       </div>
 
-      <div class="hero-settings">
-        <button id="settingsBtn" class="icon-btn" aria-label="Settings">⚙</button>
-        <div id="settingsMenu" class="settings-menu hidden">
-          <button id="openSetupBtn">Initial Setup</button>
-          <button id="driveSyncBtn">Drive Sync</button>
-        </div>
+      <div class="hero-actions">
+        <button id="openSetupBtn" class="icon-action-btn" aria-label="Initial Setup" title="Initial Setup">
+          <svg viewBox="0 0 24 24" class="icon-svg" aria-hidden="true">
+            <circle cx="12" cy="7" r="4"></circle>
+            <path d="M5 20c0-3.8 3.1-7 7-7s7 3.2 7 7"></path>
+          </svg>
+        </button>
+
+        <button id="driveSyncBtn" class="icon-action-btn" aria-label="Drive Sync" title="Drive Sync">
+          <svg viewBox="0 0 24 24" class="icon-svg drive-icon" aria-hidden="true">
+            <path d="M9 3h6l4 7-3 5h-6l-4-7z"></path>
+            <path d="M5 15h6l3 5H8z"></path>
+            <path d="M15 15h4l-3 5h-5z"></path>
+          </svg>
+        </button>
       </div>
     </div>
 

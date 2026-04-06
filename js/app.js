@@ -9,6 +9,12 @@ const state = {
   selectedHistoryRange: 'daily',
   selectedCalendarMetric: 'total',
   selectedSummaryMetric: 'total',
+  calendarCursor: {
+    year: today.getFullYear(),
+    month: today.getMonth()
+  },
+  chartOffset: 0,
+  chartWindowSize: 8,
   profile: JSON.parse(localStorage.getItem('liftflow-profile') || 'null') || structuredClone(window.DEFAULT_PROFILE),
   setRecords: { ...(window.USE_SAMPLE_DATA ? window.sampleSetRecords : {}), ...JSON.parse(localStorage.getItem('liftflow-set-records') || '{}') },
   restRemaining: 120,
@@ -59,7 +65,9 @@ const el = {
   saveProfileBtn: document.getElementById('saveProfileBtn'),
   closeSetupBtn: document.getElementById('closeSetupBtn'),
   prevChartBtn: document.getElementById('prevChartBtn'),
-  nextChartBtn: document.getElementById('nextChartBtn')
+  nextChartBtn: document.getElementById('nextChartBtn'),
+  prevMonthBtn: document.getElementById('prevMonthBtn'),
+  nextMonthBtn: document.getElementById('nextMonthBtn')
 };
 
 const { getSetKey, dateDiffDays, flashGold, drawDualChart } = window.helpers;
@@ -156,6 +164,13 @@ function getAllDatesWithTraining() {
   return [...new Set(Object.keys(state.setRecords).map(k => k.split('__')[0]))].sort();
 }
 
+function getWindowedSeries(series, offset = 0, size = 8) {
+  const total = series.length;
+  const end = Math.max(total - offset, 0);
+  const start = Math.max(end - size, 0);
+  return series.slice(start, end);
+}
+
 function makeSuggestion(exerciseName) {
   const ex = window.EXERCISES[exerciseName];
   const days = dateDiffDays(state.selectedDate, ex.lastDate);
@@ -163,8 +178,8 @@ function makeSuggestion(exerciseName) {
   const goalReps = ['サイドレイズ', 'ダンベルフライ'].includes(exerciseName) ? '10-15' : exerciseName === '懸垂' ? '6-10' : '5-8';
   const tone = days < 2 ? 'Recovery Focus' : 'Progressive Load';
   const text = days < 2
-    ? 'Previous session is close, so today prioritizes quality and repeatability over pushing load.'
-    : 'Recent trend is stable, so today aims to keep quality high and slightly raise total work.';
+    ? '前回の実施日が近いので、今日は無理に負荷を追わず、フォームの再現性と疲労管理を優先しましょう。'
+    : '最近の推移は安定しているので、今日は質を保ちながら少しだけ総仕事量を伸ばす意識がおすすめです。';
   return { goalSets, goalReps, tone, text };
 }
 
@@ -312,10 +327,8 @@ function aggregateSeries(range) {
       const start = new Date(dt);
       start.setDate(dt.getDate() - dt.getDay());
       const key = `${start.getMonth() + 1}/${start.getDate()}`;
-
       if (!weeks[key]) weeks[key] = { volume: 0, avgList: [] };
       weeks[key].volume += getTotalVolumeForDate(d);
-
       const avg = getAvgWeightForDate(d);
       if (avg) weeks[key].avgList.push(avg);
     });
@@ -334,10 +347,8 @@ function aggregateSeries(range) {
   dates.forEach(d => {
     const dt = new Date(d + 'T00:00:00');
     const key = `${dt.getMonth() + 1}月`;
-
     if (!months[key]) months[key] = { volume: 0, avgList: [] };
     months[key].volume += getTotalVolumeForDate(d);
-
     const avg = getAvgWeightForDate(d);
     if (avg) months[key].avgList.push(avg);
   });
@@ -353,9 +364,8 @@ function aggregateSeries(range) {
 }
 
 function renderCalendar() {
-  const baseDate = new Date(state.selectedHistoryDate + 'T00:00:00');
-  const year = baseDate.getFullYear();
-  const month = baseDate.getMonth();
+  const year = state.calendarCursor.year;
+  const month = state.calendarCursor.month;
 
   const firstDay = new Date(year, month, 1).getDay();
   const lastDate = new Date(year, month + 1, 0).getDate();
@@ -431,27 +441,21 @@ function renderRest() {
 function notifyRestEnd() {
   try {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
-
     if (AudioCtx) {
       const ctx = new AudioCtx();
-
       const playTone = (freq, start, duration) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-
         osc.type = 'square';
         osc.frequency.value = freq;
         osc.connect(gain);
         gain.connect(ctx.destination);
-
         gain.gain.setValueAtTime(0.0001, start);
         gain.gain.exponentialRampToValueAtTime(0.12, start + 0.01);
         gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-
         osc.start(start);
         osc.stop(start + duration);
       };
-
       const now = ctx.currentTime;
       playTone(880, now, 0.18);
       playTone(1174, now + 0.18, 0.18);
@@ -545,7 +549,6 @@ function initSelectors() {
 
 async function initializeApp() {
   await loadDriveDataOnStartup();
-
   initSelectors();
   syncRestFromInput();
   renderRootMode();
@@ -569,6 +572,7 @@ document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', (
 
 document.querySelectorAll('.segment').forEach(seg => seg.addEventListener('click', () => {
   state.selectedHistoryRange = seg.dataset.range;
+  state.chartOffset = 0;
   document.querySelectorAll('.segment').forEach(s => s.classList.toggle('active', s.dataset.range === state.selectedHistoryRange));
   renderHistorySummary();
 }));
@@ -585,18 +589,40 @@ if (el.summaryMetricSelect) {
   });
 }
 
-el.prevChartBtn.addEventListener('click', () => {
-  const aggregated = aggregateSeries(state.selectedHistoryRange);
-  if (state.chartOffset + state.chartWindowSize < aggregated.left.length) {
-    state.chartOffset += state.chartWindowSize;
-    renderHistorySummary();
-  }
-});
+if (el.prevMonthBtn && el.nextMonthBtn) {
+  el.prevMonthBtn.addEventListener('click', () => {
+    state.calendarCursor.month -= 1;
+    if (state.calendarCursor.month < 0) {
+      state.calendarCursor.month = 11;
+      state.calendarCursor.year -= 1;
+    }
+    renderCalendar();
+  });
 
-el.nextChartBtn.addEventListener('click', () => {
-  state.chartOffset = Math.max(0, state.chartOffset - state.chartWindowSize);
-  renderHistorySummary();
-});
+  el.nextMonthBtn.addEventListener('click', () => {
+    state.calendarCursor.month += 1;
+    if (state.calendarCursor.month > 11) {
+      state.calendarCursor.month = 0;
+      state.calendarCursor.year += 1;
+    }
+    renderCalendar();
+  });
+}
+
+if (el.prevChartBtn && el.nextChartBtn) {
+  el.prevChartBtn.addEventListener('click', () => {
+    const aggregated = aggregateSeries(state.selectedHistoryRange);
+    if (state.chartOffset + state.chartWindowSize < aggregated.left.length) {
+      state.chartOffset += state.chartWindowSize;
+      renderHistorySummary();
+    }
+  });
+
+  el.nextChartBtn.addEventListener('click', () => {
+    state.chartOffset = Math.max(0, state.chartOffset - state.chartWindowSize);
+    renderHistorySummary();
+  });
+}
 
 el.muscleGroupSelect.addEventListener('change', async e => {
   state.selectedGroup = e.target.value;

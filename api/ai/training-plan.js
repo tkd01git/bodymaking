@@ -18,7 +18,7 @@ export default async function handler(req, res) {
 {
   "goalSets": 数字または短い文字列,
   "goalReps": "5-8" のような短い文字列,
-  "text": "100字前後の日本語アドバイス+有益そうな事実を論文など信頼できるデータからとってくること"
+  "text": "selectedExerciseを行う際の、技術的なアドバイスを、100字前後の日本語で+有益そうな事実を論文など信頼できるデータからとってくる"
 }
 
 条件:

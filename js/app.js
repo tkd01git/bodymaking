@@ -57,6 +57,8 @@ const el = {
   summarySets: document.getElementById('summarySets'),
   historyComboCanvas: document.getElementById('historyComboCanvas'),
   trainingTrendCanvas: document.getElementById('trainingTrendCanvas'),
+  trainingTrendTitle: document.getElementById('trainingTrendTitle'),
+  historyTrendTitle: document.getElementById('historyTrendTitle'),
   openSetupBtn: document.getElementById('openSetupBtn'),
   driveSyncBtn: document.getElementById('driveSyncBtn'),
   setupModal: document.getElementById('setupModal'),
@@ -119,35 +121,37 @@ function getRecordsForDate(date) {
     });
 }
 
-function matchFilter(exercise, filter) {
-  const g = window.EXERCISES[exercise]?.group;
-  if (filter === 'total') return true;
-  if (filter === 'upper') return ['chest', 'shoulder', 'back', 'arms'].includes(g);
-  if (filter === 'lower') return g === 'legs';
-  if (filter === 'legs') return g === 'legs';
-  return g === filter;
+function getRecordsForExercise(exerciseName) {
+  return Object.keys(state.setRecords)
+    .filter(key => key.endsWith(`__${exerciseName}`))
+    .flatMap(key => {
+      const date = key.split('__')[0];
+      return state.setRecords[key].map(r => ({ ...r, exercise: exerciseName, date }));
+    });
 }
 
-function getFilteredRecordsForDate(date, filter = 'total') {
-  return getRecordsForDate(date).filter(r => matchFilter(r.exercise, filter));
+function getRecordsForDateAndMetric(date, metric = 'total') {
+  const records = getRecordsForDate(date);
+  if (metric === 'total') return records;
+  return records.filter(r => r.exercise === metric);
 }
 
-function getTotalVolumeForDate(date, filter = 'total') {
-  return getFilteredRecordsForDate(date, filter).reduce((sum, r) => sum + r.reps * r.weight, 0);
+function getTotalVolumeForDate(date, metric = 'total') {
+  return getRecordsForDateAndMetric(date, metric).reduce((sum, r) => sum + r.reps * r.weight, 0);
 }
 
-function getAvgWeightForDate(date, filter = 'total') {
-  const records = getFilteredRecordsForDate(date, filter);
+function getAvgWeightForDate(date, metric = 'total') {
+  const records = getRecordsForDateAndMetric(date, metric);
   if (!records.length) return 0;
   return Math.round((records.reduce((sum, r) => sum + r.weight, 0) / records.length) * 10) / 10;
 }
 
-function getTotalRepsForDate(date, filter = 'total') {
-  return getFilteredRecordsForDate(date, filter).reduce((sum, r) => sum + r.reps, 0);
+function getTotalRepsForDate(date, metric = 'total') {
+  return getRecordsForDateAndMetric(date, metric).reduce((sum, r) => sum + r.reps, 0);
 }
 
-function getSetCountForDate(date, filter = 'total') {
-  return getFilteredRecordsForDate(date, filter).length;
+function getSetCountForDate(date, metric = 'total') {
+  return getRecordsForDateAndMetric(date, metric).length;
 }
 
 function getAllDatesWithTraining() {
@@ -161,9 +165,39 @@ function getWindowedSeries(series, offset = 0, size = 8) {
   return series.slice(start, end);
 }
 
+function getLastPerformedDate(exerciseName) {
+  const dates = Object.keys(state.setRecords)
+    .filter(key => key.endsWith(`__${exerciseName}`))
+    .map(key => key.split('__')[0])
+    .sort();
+  return dates.length ? dates[dates.length - 1] : '';
+}
+
+function getMetricOptions() {
+  return [
+    { value: 'total', label: '全種目総重量' },
+    ...Object.keys(window.EXERCISES).map(name => ({ value: name, label: name }))
+  ];
+}
+
+function populateMetricSelect(selectEl, selectedValue) {
+  if (!selectEl) return;
+  const options = getMetricOptions();
+  selectEl.innerHTML = options
+    .map(opt => `<option value="${opt.value}">${opt.label}</option>`)
+    .join('');
+  selectEl.value = selectedValue;
+}
+
+function getMetricLabel(metric) {
+  if (metric === 'total') return '全種目';
+  return metric;
+}
+
 function makeSuggestion(exerciseName) {
   const ex = window.EXERCISES[exerciseName];
-  const days = dateDiffDays(state.selectedDate, ex.lastDate);
+  const lastPerformed = getLastPerformedDate(exerciseName) || ex.lastDate || '';
+  const days = lastPerformed ? dateDiffDays(state.selectedDate, lastPerformed) : 999;
   const goalSets = 3;
   const goalReps = ['サイドレイズ', 'ダンベルフライ'].includes(exerciseName) ? '10-15' : exerciseName === '懸垂' ? '6-10' : '5-8';
   const text = days < 2
@@ -275,8 +309,9 @@ async function renderTraining() {
   const ex = window.EXERCISES[state.selectedExercise];
   if (!ex) return;
 
+  const lastPerformed = getLastPerformedDate(state.selectedExercise) || ex.lastDate || '';
   el.exerciseName.textContent = state.selectedExercise;
-  el.lastPerformed.textContent = `前回実施: ${ex.lastDate}`;
+  el.lastPerformed.textContent = lastPerformed ? `前回実施: ${lastPerformed}` : '前回実施: -';
   el.muscleNames.innerHTML = ex.muscles.map(m => `<span class="muscle-pill">${m}</span>`).join('');
   renderSetRecords();
   renderBodyMap();
@@ -285,19 +320,25 @@ async function renderTraining() {
 }
 
 function renderTrainingTrend() {
-  const dates = getAllDatesWithTraining().slice(-6);
+  const exerciseName = state.selectedExercise;
+  const exerciseRecords = getRecordsForExercise(exerciseName);
+  const dates = [...new Set(exerciseRecords.map(r => r.date))].sort().slice(-6);
+
   const left = dates.map(d => ({
     label: `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`,
-    value: getTotalVolumeForDate(d)
+    value: getTotalVolumeForDate(d, exerciseName)
   }));
+
   const right = dates.map(d => ({
     label: `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`,
-    value: getAvgWeightForDate(d)
+    value: getAvgWeightForDate(d, exerciseName)
   }));
+
+  el.trainingTrendTitle.textContent = `${exerciseName} 総重量 × 平均重量`;
   drawDualChart(el.trainingTrendCanvas, left, right);
 }
 
-function aggregateSeries(range) {
+function aggregateSeries(range, metric = 'total') {
   const dates = getAllDatesWithTraining();
   if (!dates.length) return { left: [], right: [] };
 
@@ -305,11 +346,11 @@ function aggregateSeries(range) {
     return {
       left: dates.map(d => ({
         label: `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`,
-        value: getTotalVolumeForDate(d)
+        value: getTotalVolumeForDate(d, metric)
       })),
       right: dates.map(d => ({
         label: `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`,
-        value: getAvgWeightForDate(d)
+        value: getAvgWeightForDate(d, metric)
       }))
     };
   }
@@ -321,9 +362,11 @@ function aggregateSeries(range) {
       const start = new Date(dt);
       start.setDate(dt.getDate() - dt.getDay());
       const key = `${start.getMonth() + 1}/${start.getDate()}`;
+
       if (!weeks[key]) weeks[key] = { volume: 0, avgList: [] };
-      weeks[key].volume += getTotalVolumeForDate(d);
-      const avg = getAvgWeightForDate(d);
+      weeks[key].volume += getTotalVolumeForDate(d, metric);
+
+      const avg = getAvgWeightForDate(d, metric);
       if (avg) weeks[key].avgList.push(avg);
     });
 
@@ -341,9 +384,11 @@ function aggregateSeries(range) {
   dates.forEach(d => {
     const dt = new Date(d + 'T00:00:00');
     const key = `${dt.getMonth() + 1}月`;
+
     if (!months[key]) months[key] = { volume: 0, avgList: [] };
-    months[key].volume += getTotalVolumeForDate(d);
-    const avg = getAvgWeightForDate(d);
+    months[key].volume += getTotalVolumeForDate(d, metric);
+
+    const avg = getAvgWeightForDate(d, metric);
     if (avg) months[key].avgList.push(avg);
   });
 
@@ -402,16 +447,18 @@ function renderCalendar() {
 
 function renderHistorySummary() {
   const date = state.selectedHistoryDate;
-  const filter = state.selectedSummaryMetric;
+  const metric = state.selectedSummaryMetric;
 
-  el.summaryVolume.textContent = getTotalVolumeForDate(date, filter) || '-';
-  el.summaryAvgWeight.textContent = getAvgWeightForDate(date, filter) || '-';
-  el.summaryReps.textContent = getTotalRepsForDate(date, filter) || '-';
-  el.summarySets.textContent = getSetCountForDate(date, filter) || '-';
+  el.summaryVolume.textContent = getTotalVolumeForDate(date, metric) || '-';
+  el.summaryAvgWeight.textContent = getAvgWeightForDate(date, metric) || '-';
+  el.summaryReps.textContent = getTotalRepsForDate(date, metric) || '-';
+  el.summarySets.textContent = getSetCountForDate(date, metric) || '-';
 
-  const aggregated = aggregateSeries(state.selectedHistoryRange);
+  const aggregated = aggregateSeries(state.selectedHistoryRange, metric);
   const leftWindow = getWindowedSeries(aggregated.left, state.chartOffset, state.chartWindowSize);
   const rightWindow = getWindowedSeries(aggregated.right, state.chartOffset, state.chartWindowSize);
+
+  el.historyTrendTitle.textContent = `${getMetricLabel(metric)} 総重量 × 平均重量`;
   drawDualChart(el.historyComboCanvas, leftWindow, rightWindow);
 }
 
@@ -538,9 +585,8 @@ function initSelectors() {
   el.muscleGroupSelect.value = state.selectedGroup;
   el.exerciseSelect.value = state.selectedExercise;
 
-  if (el.summaryMetricSelect) {
-    el.summaryMetricSelect.value = state.selectedSummaryMetric;
-  }
+  populateMetricSelect(el.calendarMetricSelect, state.selectedCalendarMetric);
+  populateMetricSelect(el.summaryMetricSelect, state.selectedSummaryMetric);
 }
 
 async function initializeApp() {
@@ -583,6 +629,7 @@ if (el.calendarMetricSelect) {
 if (el.summaryMetricSelect) {
   el.summaryMetricSelect.addEventListener('change', e => {
     state.selectedSummaryMetric = e.target.value;
+    state.chartOffset = 0;
     renderHistorySummary();
   });
 }
@@ -609,7 +656,7 @@ if (el.prevMonthBtn && el.nextMonthBtn) {
 
 if (el.prevChartBtn && el.nextChartBtn) {
   el.prevChartBtn.addEventListener('click', () => {
-    const aggregated = aggregateSeries(state.selectedHistoryRange);
+    const aggregated = aggregateSeries(state.selectedHistoryRange, state.selectedSummaryMetric);
     if (state.chartOffset + state.chartWindowSize < aggregated.left.length) {
       state.chartOffset += state.chartWindowSize;
       renderHistorySummary();

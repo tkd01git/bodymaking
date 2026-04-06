@@ -7,8 +7,8 @@ export default async function handler(req, res) {
     const client = getOpenAI();
 
     const prompt = `
-あなたは筋力トレーニングの日本語コーチです。
-入力された profile, selectedExercise, records をもとに、
+あなたは筋力トレーニングの日本語コーチです。ボディビルダーをたくさん見てきた経験があり、今一人の生徒を育成しているところです。
+入力された profile, selectedExercise, records.json をもとに、
 次の JSON を日本語で返してください。
 
 {
@@ -20,8 +20,7 @@ export default async function handler(req, res) {
 条件:
 - 毎回少し違う言い回しにする
 - variationSeed を参考に表現を少し変える
-- 安全性優先
-- 無理な重量提案は避ける
+- 常に最新の論文や書籍を漁り、学生にとって最適な提案をし続けられるように根拠ベースでの指導を意識する
 - JSON以外は返さない
 
 Input:

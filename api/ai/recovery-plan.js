@@ -17,7 +17,7 @@ export default async function handler(req, res) {
 次の JSON を日本語で返してください。
 
 {
-  "text": "100字前後の日本語アドバイス"
+  "text": "100字前後の日本語アドバイス。加えて、その論拠となる論文や書籍の名前と、そこから得られる根拠の具体的内容"
 }
 
 条件:
@@ -36,7 +36,7 @@ ${JSON.stringify(body)}
 `;
 
     const completion = await client.chat.completions.create({
-      model: 'gpt-4.1-mini',
+      model: 'gpt-5.4-thinking',
       messages: [
         {
           role: 'system',

@@ -1,7 +1,9 @@
 import { getOpenAI, json, readBody } from '../_utils.js';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed' });
+  if (req.method !== 'POST') {
+    return json(res, 405, { error: 'Method not allowed' });
+  }
 
   try {
     const body = await readBody(req);
@@ -15,13 +17,17 @@ export default async function handler(req, res) {
 {
   "goalSets": 数字または短い文字列,
   "goalReps": "5-8" のような短い文字列,
-  "text": "100字前後の日本語アドバイス。加えて、論文や書籍の名前と、そこから得られるアドバイスの根拠となるデータの説明"
+  "text": "100字前後の日本語アドバイス"
 }
 
 条件:
+- 必ず日本語で返す
 - 毎回少し違う言い回しにする
 - variationSeed を参考に表現を少し変える
-- 常に最新の論文や書籍を漁り、学生にとって最適な提案をし続けられるように根拠ベースでの指導を意識する
+- 常に根拠ベースで、学生にとって現実的で実行しやすい提案にする
+- profile の身体データや目標を考慮する
+- records の過去履歴を踏まえる
+- selectedExercise の内容も考慮する
 - JSON以外は返さない
 
 Input:
@@ -30,7 +36,16 @@ ${JSON.stringify(body)}
 
     const completion = await client.chat.completions.create({
       model: 'gpt-4.1-mini',
-      messages: [{ role: 'user', content: prompt }],
+      messages: [
+        {
+          role: 'system',
+          content: 'あなたは日本語で簡潔に答える筋力トレーニングコーチです。必ずJSONのみを返してください。'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
       temperature: 0.9
     });
 
@@ -49,6 +64,17 @@ ${JSON.stringify(body)}
 
     return json(res, 200, parsed);
   } catch (e) {
-    return json(res, 500, { error: e.message });
+    console.error('AI endpoint error:', {
+      message: e?.message,
+      status: e?.status,
+      name: e?.name,
+      responseData: e?.response?.data,
+      stack: e?.stack
+    });
+
+    return json(res, 500, {
+      error: e?.message || 'Unknown error',
+      status: e?.status || 500
+    });
   }
 }

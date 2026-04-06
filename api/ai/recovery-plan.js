@@ -18,7 +18,7 @@ export default async function handler(req, res) {
 次の JSON を日本語で返してください。
 
 {
-  "text": "100字前後の日本語アドバイス"
+  "text": "100字前後の日本語アドバイス+有益そうな事実を論文など信頼できるデータからとってくること"
 }
 
 条件:
@@ -31,6 +31,7 @@ export default async function handler(req, res) {
 - 現実的で具体的な助言にする
 - 長すぎず、すぐ行動に移せる内容にする
 - JSON以外は返さない
+- 実際に論文や書籍を読んで、その根拠となるようなデータを調べた上で生成する
 
 Input:
 ${JSON.stringify(body)}

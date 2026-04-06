@@ -30,16 +30,16 @@
     <div id="record-root">
       <div id="training-page">
         <div class="card stack">
-          <div class="section-title">Exercise</div>
-          <div class="inline">
-            <div style="flex:1;">
-              <label>Main Area</label>
-              <select id="muscleGroupSelect"></select>
+          <div class="calendar-header">
+            <div class="section-title">Trend</div>
+            <div class="calendar-nav">
+              <button id="prevChartBtn" class="mini-btn" type="button">‹</button>
+              <button id="nextChartBtn" class="mini-btn" type="button">›</button>
             </div>
-            <div style="flex:1;">
-              <label>Exercise</label>
-              <select id="exerciseSelect"></select>
-            </div>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">Total Volume × Avg Weight</div>
+            <canvas id="historyComboCanvas" width="380" height="220"></canvas>
           </div>
         </div>
 

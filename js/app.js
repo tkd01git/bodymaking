@@ -15,6 +15,7 @@ const state = {
   },
   chartOffset: 0,
   chartWindowSize: 8,
+  isRecordHistoryOpen: false,
   profile: JSON.parse(localStorage.getItem('liftflow-profile') || 'null') || structuredClone(window.DEFAULT_PROFILE),
   setRecords: { ...(window.USE_SAMPLE_DATA ? window.sampleSetRecords : {}), ...JSON.parse(localStorage.getItem('liftflow-set-records') || '{}') },
   restRemaining: 120,
@@ -38,7 +39,6 @@ const el = {
   restSec: document.getElementById('restSec'),
   restStart: document.getElementById('restStart'),
   restReset: document.getElementById('restReset'),
-  setNumber: document.getElementById('setNumber'),
   repNumber: document.getElementById('repNumber'),
   weightNumber: document.getElementById('weightNumber'),
   addSetBtn: document.getElementById('addSetBtn'),
@@ -67,7 +67,9 @@ const el = {
   prevChartBtn: document.getElementById('prevChartBtn'),
   nextChartBtn: document.getElementById('nextChartBtn'),
   prevMonthBtn: document.getElementById('prevMonthBtn'),
-  nextMonthBtn: document.getElementById('nextMonthBtn')
+  nextMonthBtn: document.getElementById('nextMonthBtn'),
+  toggleRecordHistoryBtn: document.getElementById('toggleRecordHistoryBtn'),
+  recordHistoryPanel: document.getElementById('recordHistoryPanel')
 };
 
 const { getSetKey, dateDiffDays, flashGold, drawDualChart } = window.helpers;
@@ -275,10 +277,18 @@ function renderBodyMap() {
   });
 }
 
+function renderRecordHistoryToggle() {
+  if (!el.toggleRecordHistoryBtn || !el.recordHistoryPanel) return;
+  el.recordHistoryPanel.classList.toggle('hidden', !state.isRecordHistoryOpen);
+  el.toggleRecordHistoryBtn.textContent = state.isRecordHistoryOpen ? 'Hide Set History' : 'Show Set History';
+}
+
 function renderSetRecords() {
   const records = state.setRecords[getSetKey(state.selectedDate, state.selectedExercise)] || [];
+
   if (!records.length) {
     el.setRecords.innerHTML = '<div class="sub">まだ記録がありません。</div>';
+    renderRecordHistoryToggle();
     return;
   }
 
@@ -295,7 +305,13 @@ function renderSetRecords() {
   el.setRecords.querySelectorAll('[data-remove]').forEach(btn => btn.addEventListener('click', async () => {
     const arr = state.setRecords[getSetKey(state.selectedDate, state.selectedExercise)] || [];
     arr.splice(Number(btn.dataset.remove), 1);
-    state.setRecords[getSetKey(state.selectedDate, state.selectedExercise)] = arr;
+
+    if (!arr.length) {
+      delete state.setRecords[getSetKey(state.selectedDate, state.selectedExercise)];
+    } else {
+      state.setRecords[getSetKey(state.selectedDate, state.selectedExercise)] = arr;
+    }
+
     saveLocal();
     renderSetRecords();
     renderTrainingTrend();
@@ -303,6 +319,8 @@ function renderSetRecords() {
     renderCalendar();
     await saveRecordsEveryTime();
   }));
+
+  renderRecordHistoryToggle();
 }
 
 async function renderTraining() {
@@ -540,16 +558,17 @@ async function saveRecordsEveryTime() {
 async function addSetRecord() {
   const key = getSetKey(state.selectedDate, state.selectedExercise);
   const arr = state.setRecords[key] || [];
+  const nextSet = arr.length + 1;
+
   arr.push({
-    set: Number(el.setNumber.value),
+    set: nextSet,
     reps: Number(el.repNumber.value),
     weight: Number(el.weightNumber.value)
   });
+
   state.setRecords[key] = arr.sort((a, b) => a.set - b.set);
 
   saveLocal();
-  el.setNumber.value = String(Math.min(Number(el.setNumber.value) + 1, 8));
-
   renderSetRecords();
   renderTrainingTrend();
   renderHistorySummary();
@@ -572,10 +591,7 @@ function initSelectors() {
 
   renderExerciseOptions();
 
-  for (let i = 1; i <= 8; i++) {
-    el.setNumber.insertAdjacentHTML('beforeend', `<option value="${i}">${i} set</option>`);
-  }
-  for (let i = 1; i <= 20; i++) {
+  for (let i = 1; i <= 30; i++) {
     el.repNumber.insertAdjacentHTML('beforeend', `<option value="${i}">${i} reps</option>`);
   }
   for (let i = 0; i <= 220; i += 2.5) {
@@ -587,6 +603,8 @@ function initSelectors() {
 
   populateMetricSelect(el.calendarMetricSelect, state.selectedCalendarMetric);
   populateMetricSelect(el.summaryMetricSelect, state.selectedSummaryMetric);
+
+  renderRecordHistoryToggle();
 }
 
 async function initializeApp() {
@@ -666,6 +684,13 @@ if (el.prevChartBtn && el.nextChartBtn) {
   el.nextChartBtn.addEventListener('click', () => {
     state.chartOffset = Math.max(0, state.chartOffset - state.chartWindowSize);
     renderHistorySummary();
+  });
+}
+
+if (el.toggleRecordHistoryBtn) {
+  el.toggleRecordHistoryBtn.addEventListener('click', () => {
+    state.isRecordHistoryOpen = !state.isRecordHistoryOpen;
+    renderRecordHistoryToggle();
   });
 }
 

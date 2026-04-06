@@ -57,7 +57,9 @@ const el = {
   driveSyncBtn: document.getElementById('driveSyncBtn'),
   setupModal: document.getElementById('setupModal'),
   saveProfileBtn: document.getElementById('saveProfileBtn'),
-  closeSetupBtn: document.getElementById('closeSetupBtn')
+  closeSetupBtn: document.getElementById('closeSetupBtn'),
+  prevChartBtn: document.getElementById('prevChartBtn'),
+  nextChartBtn: document.getElementById('nextChartBtn')
 };
 
 const { getSetKey, dateDiffDays, flashGold, drawDualChart } = window.helpers;

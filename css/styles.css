@@ -83,18 +83,36 @@ canvas { width:100%; height:220px; display:block; }
 }
 
 .settings-menu {
-  position:absolute;
-  top:52px;
-  right:0;
-  width:190px;
-  background:#0c1119;
-  border:1px solid var(--line);
-  border-radius:16px;
-  padding:8px;
-  display:grid;
-  gap:8px;
-  box-shadow:0 16px 40px rgba(0,0,0,.35);
-  z-index:20;
+  position: absolute;
+  top: 46px;
+  right: 0;
+  width: 140px;
+  background: #0c1119;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 5px;
+  display: grid;
+  gap: 5px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .28);
+  z-index: 20;
+}
+
+.settings-menu button {
+  padding: 7px 9px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 9px;
+  color: var(--muted);
+  background: #0b1119;
+  border: 1px solid #182231;
+  text-align: left;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+
+.settings-menu button:hover {
+  background: #101826;
+  color: var(--text);
+  border-color: #243247;
 }
 
 .time-input { width:100%; }

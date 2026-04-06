@@ -12,17 +12,13 @@ export default async function handler(req, res) {
 次の JSON を日本語で返してください。
 
 {
-  "protein": 数値,
-  "water": 数値,
-  "sleep": 数値,
-  "carb": 数値,
   "text": "100字前後の日本語アドバイス"
 }
 
 条件:
 - 毎回少し違う言い回しにする
 - variationSeed を参考に表現を少し変える
-- 現実的な提案にする
+- 現実的な提案にする。具体的には、これまでrecords.jsonで見てきたデータがあると思いますが、その内容をきちんと踏まえたり、最新の論文をきちんと追いながら、正確なアドバイスをなるべく具体的にすること。
 - JSON以外は返さない
 
 Input:

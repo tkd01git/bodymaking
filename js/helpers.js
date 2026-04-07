@@ -44,30 +44,31 @@ window.helpers = {
     const h = canvas.height;
 
     ctx.clearRect(0, 0, w, h);
-    ctx.fillStyle = '#09101a';
+    ctx.fillStyle = '#0b0b0b';
     ctx.fillRect(0, 0, w, h);
 
     if (!leftSeries.length) return;
 
-    const maxLeft = Math.max(...leftSeries.map(x => x.value), 1);
-    const maxRight = Math.max(...rightSeries.map(x => x.value), 1);
+    const maxLeft = Math.max(...leftSeries.map(x => Number(x.value || 0)), 1);
+    const maxRight = Math.max(...rightSeries.map(x => Number(x.value || 0)), 1);
 
-    const left = 38;
-    const right = 40;
+    const leftPad = 38;
+    const rightPad = 40;
     const top = 18;
     const bottom = 30;
-    const cw = w - left - right;
+    const cw = w - leftPad - rightPad;
     const ch = h - top - bottom;
     const count = Math.max(leftSeries.length, rightSeries.length);
     const stepX = cw / Math.max(count - 1, 1);
+    const barWidth = Math.min(18, stepX * 0.42);
 
-    ctx.strokeStyle = '#223044';
+    ctx.strokeStyle = '#2a2a2a';
     ctx.lineWidth = 1;
     for (let i = 0; i < 4; i++) {
       const y = top + (ch / 3) * i;
       ctx.beginPath();
-      ctx.moveTo(left, y);
-      ctx.lineTo(w - right, y);
+      ctx.moveTo(leftPad, y);
+      ctx.lineTo(w - rightPad, y);
       ctx.stroke();
     }
 
@@ -76,75 +77,63 @@ window.helpers = {
       const leftVal = Math.round(maxLeft - (maxLeft / 3) * i);
       const rightVal = Math.round((maxRight - (maxRight / 3) * i) * 10) / 10;
 
-      ctx.fillStyle = '#60a5fa';
+      ctx.fillStyle = '#d4af37';
       ctx.font = '10px sans-serif';
       ctx.textAlign = 'right';
-      ctx.fillText(String(leftVal), left - 6, y + 3);
+      ctx.fillText(String(leftVal), leftPad - 6, y + 3);
 
-      ctx.fillStyle = '#22c55e';
+      ctx.fillStyle = '#f3f3f3';
       ctx.textAlign = 'left';
-      ctx.fillText(String(rightVal), w - right + 6, y + 3);
+      ctx.fillText(String(rightVal), w - rightPad + 6, y + 3);
     }
 
-    ctx.strokeStyle = '#60a5fa';
+    rightSeries.forEach((p, i) => {
+      const x = leftPad + stepX * i;
+      const barHeight = (Number(p.value || 0) / maxRight) * ch;
+      const y = top + ch - barHeight;
+      ctx.fillStyle = '#f3f3f3';
+      ctx.fillRect(x - barWidth / 2, y, barWidth, barHeight);
+    });
+
+    ctx.strokeStyle = '#d4af37';
     ctx.lineWidth = 3;
     ctx.beginPath();
     leftSeries.forEach((p, i) => {
-      const x = left + stepX * i;
-      const y = top + ch - (p.value / maxLeft) * ch;
+      const x = leftPad + stepX * i;
+      const y = top + ch - (Number(p.value || 0) / maxLeft) * ch;
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     });
     ctx.stroke();
 
     leftSeries.forEach((p, i) => {
-      const x = left + stepX * i;
-      const y = top + ch - (p.value / maxLeft) * ch;
-      ctx.fillStyle = '#60a5fa';
-      ctx.beginPath();
-      ctx.arc(x, y, 4, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
-    ctx.strokeStyle = '#22c55e';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    rightSeries.forEach((p, i) => {
-      const x = left + stepX * i;
-      const y = top + ch - (p.value / maxRight) * ch;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    });
-    ctx.stroke();
-
-    rightSeries.forEach((p, i) => {
-      const x = left + stepX * i;
-      const y = top + ch - (p.value / maxRight) * ch;
-      ctx.fillStyle = '#22c55e';
+      const x = leftPad + stepX * i;
+      const y = top + ch - (Number(p.value || 0) / maxLeft) * ch;
+      ctx.fillStyle = '#d4af37';
       ctx.beginPath();
       ctx.arc(x, y, 4, 0, Math.PI * 2);
       ctx.fill();
     });
 
     for (let i = 0; i < count; i++) {
-      const x = left + stepX * i;
+      const x = leftPad + stepX * i;
       const label = leftSeries[i]?.label || rightSeries[i]?.label || '';
-      ctx.fillStyle = '#93a0b4';
+      ctx.fillStyle = '#b8b8b8';
       ctx.font = '11px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(label, x, h - 10);
     }
 
-    ctx.fillStyle = '#60a5fa';
-    ctx.fillRect(left, 6, 12, 3);
-    ctx.fillStyle = '#cfe5ff';
+    ctx.fillStyle = '#d4af37';
+    ctx.fillRect(leftPad, 6, 12, 3);
+    ctx.fillStyle = '#f0d98a';
     ctx.font = '11px sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText('総挙上量', left + 16, 10);
+    ctx.fillText('総挙上量', leftPad + 16, 10);
 
-    ctx.fillStyle = '#22c55e';
-    ctx.fillRect(left + 98, 6, 12, 3);
-    ctx.fillStyle = '#d6ffe4';
-    ctx.fillText('平均重量', left + 114, 10);
+    ctx.fillStyle = '#f3f3f3';
+    ctx.fillRect(leftPad + 98, 6, 12, 3);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('平均重量', leftPad + 114, 10);
   }
 };

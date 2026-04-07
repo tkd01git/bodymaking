@@ -63,7 +63,6 @@ window.helpers = {
 
     ctx.strokeStyle = '#223044';
     ctx.lineWidth = 1;
-
     for (let i = 0; i < 4; i++) {
       const y = top + (ch / 3) * i;
       ctx.beginPath();

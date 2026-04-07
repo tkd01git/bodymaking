@@ -189,6 +189,15 @@ button {
   gap: 8px;
 }
 
+.ai-action-row {
+  margin-top: 12px;
+}
+
+.ai-action-btn {
+  width: 100%;
+  justify-content: center;
+}
+
 .ai-box {
   margin-top: 12px;
   background: #0f0f0f;
@@ -198,6 +207,7 @@ button {
   color: #e8e8e8;
   font-size: 13px;
   line-height: 1.6;
+  min-height: 48px;
 }
 
 .timer-mini {
@@ -385,9 +395,12 @@ canvas {
   padding: 8px 0;
 }
 
-.day.active {
-  border-color: rgba(212, 175, 55, 0.82);
-  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.18) inset;
+.day.active,
+.day.partial.active {
+  border-color: rgba(212, 175, 55, 0.92);
+  box-shadow:
+    0 0 0 1px rgba(212, 175, 55, 0.28) inset,
+    0 0 12px rgba(212, 175, 55, 0.12);
 }
 
 .day.partial {

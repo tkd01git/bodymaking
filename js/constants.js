@@ -14,6 +14,7 @@ window.EXERCISES = {
   '懸垂': { target:['latFrontL','latFrontR','latBackL','latBackR','upperBack'], muscles:['広背筋','大円筋','僧帽筋中下部'], lastDate:'', group:'back', groupLabel:'背中' },
   'ベントオーバーロー': { target:['upperBack','latBackL','latBackR'], muscles:['広背筋','僧帽筋','菱形筋'], lastDate:'', group:'back', groupLabel:'背中' },
   'シーテッドロー': { target:['upperBack','latBackL','latBackR'], muscles:['広背筋','菱形筋'], lastDate:'', group:'back', groupLabel:'背中' },
+  'ワンハンドローイング': { target:['upperBack','latBackL','latBackR'], muscles:['広背筋','大円筋','僧帽筋中部'], lastDate:'', group:'back', groupLabel:'背中' },
 
   'デッドリフト': { target:['hamL','hamR','gluteL','gluteR','upperBack','latBackL','latBackR'], muscles:['ハムストリングス','大臀筋','広背筋','僧帽筋'], lastDate:'', group:'legs', groupLabel:'脚' },
   'スクワット': { target:['quadFrontL','quadFrontR','gluteL','gluteR'], muscles:['大腿四頭筋','大臀筋'], lastDate:'', group:'legs', groupLabel:'脚' },
@@ -24,7 +25,9 @@ window.EXERCISES = {
 
   'アームカール': { target:['shoulderFrontL','shoulderFrontR'], muscles:['上腕二頭筋'], lastDate:'', group:'arms', groupLabel:'腕' },
   'ハンマーカール': { target:['shoulderFrontL','shoulderFrontR'], muscles:['上腕二頭筋','腕橈骨筋'], lastDate:'', group:'arms', groupLabel:'腕' },
-  'トライセプスプレスダウン': { target:['shoulderFrontL','shoulderFrontR'], muscles:['上腕三頭筋'], lastDate:'', group:'arms', groupLabel:'腕' }
+  'トライセプスプレスダウン': { target:['shoulderFrontL','shoulderFrontR'], muscles:['上腕三頭筋'], lastDate:'', group:'arms', groupLabel:'腕' },
+  'スカルクラッシャー': { target:['shoulderFrontL','shoulderFrontR'], muscles:['上腕三頭筋'], lastDate:'', group:'arms', groupLabel:'腕' },
+  '三頭筋腕振り': { target:['shoulderFrontL','shoulderFrontR'], muscles:['上腕三頭筋'], lastDate:'', group:'arms', groupLabel:'腕' }
 };
 
 window.MUSCLE_GROUPS = [

@@ -43,23 +43,6 @@ window.helpers = {
     };
   },
 
-  getNiceAxisMax(maxValue) {
-    if (!maxValue || maxValue <= 0) return 4;
-
-    const roughStep = maxValue / 4;
-    const magnitude = Math.pow(10, Math.floor(Math.log10(roughStep)));
-    const normalized = roughStep / magnitude;
-
-    let niceStep;
-    if (normalized <= 1) niceStep = 1;
-    else if (normalized <= 2) niceStep = 2;
-    else if (normalized <= 5) niceStep = 5;
-    else niceStep = 10;
-
-    const step = niceStep * magnitude;
-    return step * 4;
-  },
-
   drawDualChart(canvas, leftSeries = [], rightSeries = []) {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -85,11 +68,8 @@ window.helpers = {
     const leftValues = Array.from({ length: count }, (_, i) => Number(leftSeries[i]?.value ?? 0));
     const rightValues = Array.from({ length: count }, (_, i) => Number(rightSeries[i]?.value ?? 0));
 
-    const leftRawMax = Math.max(...leftValues, 0);
-    const rightRawMax = Math.max(...rightValues, 0);
-
-    const leftMax = this.getNiceAxisMax(leftRawMax);
-    const rightMax = this.getNiceAxisMax(rightRawMax);
+    const leftMax = Math.max(...leftValues, 1);
+    const rightMax = Math.max(...rightValues, 1);
 
     const xAt = (i) => {
       if (count === 1) return padding.left + chartWidth / 2;

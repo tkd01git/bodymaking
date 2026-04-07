@@ -60,7 +60,9 @@ window.helpers = {
     const ch = h - top - bottom;
     const count = Math.max(leftSeries.length, rightSeries.length);
     const stepX = cw / Math.max(count - 1, 1);
-    const barWidth = Math.min(18, stepX * 0.42);
+
+    // 棒グラフを細く
+    const barWidth = Math.min(10, stepX * 0.22);
 
     ctx.strokeStyle = '#2a2a2a';
     ctx.lineWidth = 1;
@@ -82,19 +84,21 @@ window.helpers = {
       ctx.textAlign = 'right';
       ctx.fillText(String(leftVal), leftPad - 6, y + 3);
 
-      ctx.fillStyle = '#f3f3f3';
+      ctx.fillStyle = '#cfcfcf';
       ctx.textAlign = 'left';
       ctx.fillText(String(rightVal), w - rightPad + 6, y + 3);
     }
 
+    // 平均重量: グレーの棒グラフ
     rightSeries.forEach((p, i) => {
       const x = leftPad + stepX * i;
       const barHeight = (Number(p.value || 0) / maxRight) * ch;
       const y = top + ch - barHeight;
-      ctx.fillStyle = '#f3f3f3';
+      ctx.fillStyle = '#8a8a8a';
       ctx.fillRect(x - barWidth / 2, y, barWidth, barHeight);
     });
 
+    // 総挙上量: 黄色の折れ線
     ctx.strokeStyle = '#d4af37';
     ctx.lineWidth = 3;
     ctx.beginPath();
@@ -124,6 +128,7 @@ window.helpers = {
       ctx.fillText(label, x, h - 10);
     }
 
+    // 凡例
     ctx.fillStyle = '#d4af37';
     ctx.fillRect(leftPad, 6, 12, 3);
     ctx.fillStyle = '#f0d98a';
@@ -131,9 +136,9 @@ window.helpers = {
     ctx.textAlign = 'left';
     ctx.fillText('総挙上量', leftPad + 16, 10);
 
-    ctx.fillStyle = '#f3f3f3';
+    ctx.fillStyle = '#8a8a8a';
     ctx.fillRect(leftPad + 98, 6, 12, 3);
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = '#cfcfcf';
     ctx.fillText('平均重量', leftPad + 114, 10);
   }
 };

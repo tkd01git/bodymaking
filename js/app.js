@@ -225,19 +225,15 @@ function getRangeSummary(anchorDateStr, rangeType, metric = 'total') {
 }
 
 function buildAnchorsBackwards(rangeType) {
-  const dates = getAllDatesWithTraining();
-  if (!dates.length) return [];
-
   const latest = new Date(`${state.selectedHistoryDate}T00:00:00`);
-  const earliest = new Date(`${dates[0]}T00:00:00`);
   const step = rangeType === 'daily' ? 1 : rangeType === 'weekly' ? 7 : 30;
-
+  const pointCount = 5;
   const anchors = [];
-  const cursor = new Date(latest);
 
-  while (cursor >= earliest) {
-    anchors.unshift(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}-${String(cursor.getDate()).padStart(2, '0')}`);
-    cursor.setDate(cursor.getDate() - step);
+  for (let i = pointCount - 1; i >= 0; i--) {
+    const d = new Date(latest);
+    d.setDate(latest.getDate() - step * i);
+    anchors.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
   }
 
   return anchors;

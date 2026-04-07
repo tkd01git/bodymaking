@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LiftFlow</title>
-  <link rel="stylesheet" href="./css/styles.css?v=20260407-3" />
+  <link rel="stylesheet" href="./css/styles.css?v=20260408-1" />
 </head>
 <body>
   <div class="wrap">
@@ -104,7 +104,7 @@
 
             <div class="goal-grid">
               <div class="goal-box">
-                <div class="goal-label">&nbsp;</div>
+                <div class="goal-label">Sets</div>
                 <div class="goal-value" id="goalSets">-</div>
               </div>
               <div class="goal-box">
@@ -113,7 +113,10 @@
               </div>
             </div>
 
-            <div class="ai-box" id="aiSuggestionText">Plan text</div>
+            <div class="ai-action-row">
+              <button id="planAiBtn" class="mini-btn ai-action-btn" type="button">AIコメント</button>
+            </div>
+            <div class="ai-box" id="aiSuggestionText"></div>
           </div>
         </div>
 
@@ -161,14 +164,17 @@
         <div class="card stack">
           <div class="section-title">Trend</div>
           <div class="chart-box">
-            <div class="chart-title" id="trainingTrendTitle">Selected Exercise × Avg Weight</div>
+            <div class="chart-title" id="trainingTrendTitle">Selected Exercise</div>
             <canvas id="trainingTrendCanvas" width="380" height="220"></canvas>
           </div>
         </div>
 
         <div class="card stack" id="recoveryCard">
           <div class="section-title">Recovery Comment</div>
-          <div class="ai-box" id="dailyAiText">Recovery text</div>
+          <div class="ai-action-row">
+            <button id="recoveryAiBtn" class="mini-btn ai-action-btn" type="button">AIコメント</button>
+          </div>
+          <div class="ai-box" id="dailyAiText"></div>
         </div>
       </div>
     </div>
@@ -234,7 +240,7 @@
           </div>
         </div>
         <div class="chart-box">
-          <div class="chart-title" id="historyTrendTitle">Selected Exercise × Avg Weight</div>
+          <div class="chart-title" id="historyTrendTitle">Selected Exercise</div>
           <canvas id="historyComboCanvas" width="380" height="220"></canvas>
         </div>
       </div>
@@ -268,11 +274,11 @@
     </div>
   </div>
 
-  <script src="./js/constants.js?v=20260407-3"></script>
-  <script src="./js/sampleData.js?v=20260407-3"></script>
-  <script src="./js/helpers.js?v=20260407-3"></script>
-  <script src="./js/drive.js?v=20260407-3"></script>
-  <script src="./js/ai.js?v=20260407-3"></script>
-  <script src="./js/app.js?v=20260407-3"></script>
+  <script src="./js/constants.js?v=20260408-1"></script>
+  <script src="./js/sampleData.js?v=20260408-1"></script>
+  <script src="./js/helpers.js?v=20260408-1"></script>
+  <script src="./js/drive.js?v=20260408-1"></script>
+  <script src="./js/ai.js?v=20260408-1"></script>
+  <script src="./js/app.js?v=20260408-1"></script>
 </body>
 </html>

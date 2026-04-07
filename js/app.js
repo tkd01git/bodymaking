@@ -2,8 +2,8 @@ const today = new Date();
 const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
 const state = {
-  selectedGroup: 'chest',
-  selectedExercise: 'ベンチプレス',
+  selectedGroup: '',
+  selectedExercise: '',
   selectedDate: todayStr,
   selectedHistoryDate: todayStr,
   selectedHistoryRange: 'daily',
@@ -266,6 +266,14 @@ function makeRecoverySuggestion() {
 }
 
 async function refreshAiSuggestions() {
+  if (!state.selectedExercise) {
+    el.goalSets.textContent = '-';
+    el.goalReps.textContent = '-';
+    el.aiSuggestionText.textContent = '種目を選択するとAI提案を表示します。';
+    el.dailyAiText.textContent = '種目を選択すると回復コメントを表示します。';
+    return;
+  }
+
   const payload = {
     profile: state.profile,
     selectedExercise: state.selectedExercise,
@@ -298,7 +306,13 @@ async function refreshAiSuggestions() {
 function renderExerciseOptions() {
   if (!el.exerciseSelect) return;
 
-  el.exerciseSelect.innerHTML = '';
+  el.exerciseSelect.innerHTML = '<option value="">選択してください</option>';
+
+  if (!state.selectedGroup) {
+    state.selectedExercise = '';
+    return;
+  }
+
   Object.entries(window.EXERCISES)
     .filter(([, v]) => v.group === state.selectedGroup)
     .forEach(([name]) => {
@@ -309,8 +323,10 @@ function renderExerciseOptions() {
     });
 
   if (!window.EXERCISES[state.selectedExercise] || window.EXERCISES[state.selectedExercise].group !== state.selectedGroup) {
-    state.selectedExercise = el.exerciseSelect.value || Object.keys(window.EXERCISES)[0];
+    state.selectedExercise = '';
   }
+
+  el.exerciseSelect.value = state.selectedExercise;
 }
 
 function renderBodyMap() {
@@ -318,10 +334,12 @@ function renderBodyMap() {
     if (node.tagName !== 'svg') node.setAttribute('fill', '#1f2937');
   });
 
-  const targets = window.EXERCISES[state.selectedExercise]?.target || [];
+  if (!state.selectedExercise || !window.EXERCISES[state.selectedExercise]) return;
+
+  const targets = window.EXERCISES[state.selectedExercise].target || [];
   targets.forEach(id => {
     const node = document.getElementById(id);
-    if (node) node.setAttribute('fill', '#ef4444');
+    if (node) node.setAttribute('fill', '#d4af37');
   });
 }
 
@@ -344,6 +362,12 @@ function formatRecordTimestamp(record) {
 }
 
 function renderSetRecords() {
+  if (!state.selectedExercise) {
+    el.setRecords.innerHTML = '<div class="sub">種目を選択してください。</div>';
+    renderRecordHistoryToggle();
+    return;
+  }
+
   const records = (state.setRecords[getSetKey(state.selectedDate, state.selectedExercise)] || [])
     .map((r, index) => ({ ...r, __originalIndex: index, date: state.selectedDate }))
     .sort((a, b) => {
@@ -390,9 +414,17 @@ function renderSetRecords() {
 }
 
 async function renderTraining() {
-  const ex = window.EXERCISES[state.selectedExercise];
-  if (!ex) return;
+  if (!state.selectedExercise || !window.EXERCISES[state.selectedExercise]) {
+    el.exerciseName.textContent = '-';
+    el.lastPerformed.textContent = '前回実施: -';
+    el.muscleNames.innerHTML = '';
+    renderSetRecords();
+    renderBodyMap();
+    renderTrainingTrend();
+    return;
+  }
 
+  const ex = window.EXERCISES[state.selectedExercise];
   const lastPerformed = getLastPerformedDate(state.selectedExercise) || ex.lastDate || '';
   el.exerciseName.textContent = state.selectedExercise;
   el.lastPerformed.textContent = lastPerformed ? `前回実施: ${lastPerformed}` : '前回実施: -';
@@ -403,6 +435,12 @@ async function renderTraining() {
 }
 
 function renderTrainingTrend() {
+  if (!state.selectedExercise) {
+    el.trainingTrendTitle.textContent = 'Selected Exercise × Avg Weight';
+    drawDualChart(el.trainingTrendCanvas, [], []);
+    return;
+  }
+
   const exerciseName = state.selectedExercise;
   const exerciseRecords = getRecordsForExercise(exerciseName);
   const dates = [...new Set(exerciseRecords.map(r => r.date))].sort().slice(-6);
@@ -427,14 +465,14 @@ function aggregateSeries(range, metric = 'total') {
     left: anchors.map(anchor => {
       const summary = getRangeSummary(anchor, range, metric);
       return {
-        label: range === 'daily' ? `${anchor.slice(5, 7)}/${anchor.slice(8, 10)}` : `${anchor.slice(5, 7)}/${anchor.slice(8, 10)}`,
+        label: `${anchor.slice(5, 7)}/${anchor.slice(8, 10)}`,
         value: summary.totalVolume
       };
     }),
     right: anchors.map(anchor => {
       const summary = getRangeSummary(anchor, range, metric);
       return {
-        label: range === 'daily' ? `${anchor.slice(5, 7)}/${anchor.slice(8, 10)}` : `${anchor.slice(5, 7)}/${anchor.slice(8, 10)}`,
+        label: `${anchor.slice(5, 7)}/${anchor.slice(8, 10)}`,
         value: summary.avgWeight
       };
     })
@@ -606,6 +644,7 @@ async function saveRecordsEveryTime() {
 }
 
 async function addSetRecord() {
+  if (!state.selectedExercise) return;
   await primeAudio();
 
   const key = getSetKey(state.selectedDate, state.selectedExercise);
@@ -634,6 +673,7 @@ async function addSetRecord() {
 function initSelectors() {
   if (!el.muscleGroupSelect) return;
 
+  el.muscleGroupSelect.innerHTML = '<option value="">選択してください</option>';
   window.MUSCLE_GROUPS.forEach(g => {
     const opt = document.createElement('option');
     opt.value = g.value;
@@ -743,8 +783,8 @@ if (el.muscleGroupSelect) {
   el.muscleGroupSelect.addEventListener('change', async e => {
     await primeAudio();
     state.selectedGroup = e.target.value;
+    state.selectedExercise = '';
     renderExerciseOptions();
-    el.exerciseSelect.value = state.selectedExercise;
     await renderTraining();
     await refreshAiSuggestions();
     flashGold(el.suggestionCard);

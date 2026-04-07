@@ -4,154 +4,148 @@ window.helpers = {
   },
 
   dateDiffDays(a, b) {
-    if (!a || !b) return 999;
-    const da = new Date(`${a}T00:00:00`);
-    const db = new Date(`${b}T00:00:00`);
-    return Math.floor((da - db) / (1000 * 60 * 60 * 24));
+    return Math.round(
+      (new Date(a + 'T00:00:00') - new Date(b + 'T00:00:00')) / 86400000
+    );
   },
 
-  flashGold(el) {
-    if (!el) return;
-    el.classList.remove('gold-flash');
-    void el.offsetWidth;
-    el.classList.add('gold-flash');
-    setTimeout(() => el.classList.remove('gold-flash'), 900);
-  },
-
-  writeProfileToForm(profile) {
-    if (!profile) return;
-    document.getElementById('profileHeight').value = profile.height ?? '';
-    document.getElementById('profileWeight').value = profile.weight ?? '';
-    document.getElementById('profileGoal').value = profile.goal ?? 'hypertrophy';
-    document.getElementById('profileFrequency').value = profile.frequency ?? 3;
-    document.getElementById('pbBench').value = profile.pbs?.benchPress ?? '';
-    document.getElementById('pbSquat').value = profile.pbs?.squat ?? '';
-    document.getElementById('pbDeadlift').value = profile.pbs?.deadlift ?? '';
+  flashGold(target) {
+    target.classList.add('gold-flash');
+    setTimeout(() => target.classList.remove('gold-flash'), 420);
   },
 
   readProfileFromForm() {
     return {
-      height: Number(document.getElementById('profileHeight').value || ''),
-      weight: Number(document.getElementById('profileWeight').value || ''),
+      height: document.getElementById('profileHeight').value,
+      weight: document.getElementById('profileWeight').value,
       goal: document.getElementById('profileGoal').value,
-      frequency: Number(document.getElementById('profileFrequency').value || ''),
+      frequency: document.getElementById('profileFrequency').value,
       pbs: {
-        benchPress: Number(document.getElementById('pbBench').value || ''),
-        squat: Number(document.getElementById('pbSquat').value || ''),
-        deadlift: Number(document.getElementById('pbDeadlift').value || '')
+        benchPress: document.getElementById('pbBench').value,
+        squat: document.getElementById('pbSquat').value,
+        deadlift: document.getElementById('pbDeadlift').value
       }
     };
   },
 
-  drawDualChart(canvas, leftSeries = [], rightSeries = []) {
-    if (!canvas) return;
+  writeProfileToForm(profile) {
+    document.getElementById('profileHeight').value = profile.height || '';
+    document.getElementById('profileWeight').value = profile.weight || '';
+    document.getElementById('profileGoal').value = profile.goal || 'hypertrophy';
+    document.getElementById('profileFrequency').value = profile.frequency || 3;
+    document.getElementById('pbBench').value = profile.pbs?.benchPress || '';
+    document.getElementById('pbSquat').value = profile.pbs?.squat || '';
+    document.getElementById('pbDeadlift').value = profile.pbs?.deadlift || '';
+  },
+
+  drawDualChart(canvas, leftSeries, rightSeries) {
     const ctx = canvas.getContext('2d');
-    const width = canvas.width;
-    const height = canvas.height;
+    const w = canvas.width;
+    const h = canvas.height;
 
-    ctx.clearRect(0, 0, width, height);
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#09101a';
+    ctx.fillRect(0, 0, w, h);
 
-    const padding = { top: 18, right: 42, bottom: 34, left: 42 };
-    const chartWidth = width - padding.left - padding.right;
-    const chartHeight = height - padding.top - padding.bottom;
+    if (!leftSeries.length) return;
 
+    const maxLeft = Math.max(...leftSeries.map(x => x.value), 1);
+    const maxRight = Math.max(...rightSeries.map(x => x.value), 1);
+
+    const left = 38;
+    const right = 40;
+    const top = 18;
+    const bottom = 30;
+    const cw = w - left - right;
+    const ch = h - top - bottom;
     const count = Math.max(leftSeries.length, rightSeries.length);
-    if (!count) {
-      ctx.fillStyle = '#9a9a9a';
-      ctx.font = '12px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('No data', width / 2, height / 2);
-      return;
-    }
+    const stepX = cw / Math.max(count - 1, 1);
 
-    const labels = Array.from({ length: count }, (_, i) => leftSeries[i]?.label ?? rightSeries[i]?.label ?? '');
-    const leftValues = Array.from({ length: count }, (_, i) => Number(leftSeries[i]?.value ?? 0));
-    const rightValues = Array.from({ length: count }, (_, i) => Number(rightSeries[i]?.value ?? 0));
-
-    const leftMax = Math.max(...leftValues, 1);
-    const rightMax = Math.max(...rightValues, 1);
-
-    const xAt = (i) => {
-      if (count === 1) return padding.left + chartWidth / 2;
-      return padding.left + (chartWidth * i) / (count - 1);
-    };
-    const yLeft = (v) => padding.top + chartHeight - (v / leftMax) * chartHeight;
-    const yRight = (v) => padding.top + chartHeight - (v / rightMax) * chartHeight;
-
-    ctx.strokeStyle = '#252525';
+    ctx.strokeStyle = '#223044';
     ctx.lineWidth = 1;
-    for (let i = 0; i <= 4; i++) {
-      const y = padding.top + (chartHeight * i) / 4;
+
+    for (let i = 0; i < 4; i++) {
+      const y = top + (ch / 3) * i;
       ctx.beginPath();
-      ctx.moveTo(padding.left, y);
-      ctx.lineTo(width - padding.right, y);
+      ctx.moveTo(left, y);
+      ctx.lineTo(w - right, y);
       ctx.stroke();
     }
 
-    ctx.fillStyle = '#9a9a9a';
-    ctx.font = '10px sans-serif';
-    ctx.textBaseline = 'middle';
+    for (let i = 0; i < 4; i++) {
+      const y = top + (ch / 3) * i;
+      const leftVal = Math.round(maxLeft - (maxLeft / 3) * i);
+      const rightVal = Math.round((maxRight - (maxRight / 3) * i) * 10) / 10;
 
-    ctx.textAlign = 'right';
-    for (let i = 0; i <= 4; i++) {
-      const value = Math.round((leftMax * (4 - i)) / 4);
-      const y = padding.top + (chartHeight * i) / 4;
-      ctx.fillText(String(value), padding.left - 6, y);
+      ctx.fillStyle = '#60a5fa';
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(String(leftVal), left - 6, y + 3);
+
+      ctx.fillStyle = '#22c55e';
+      ctx.textAlign = 'left';
+      ctx.fillText(String(rightVal), w - right + 6, y + 3);
     }
 
+    ctx.strokeStyle = '#60a5fa';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    leftSeries.forEach((p, i) => {
+      const x = left + stepX * i;
+      const y = top + ch - (p.value / maxLeft) * ch;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    leftSeries.forEach((p, i) => {
+      const x = left + stepX * i;
+      const y = top + ch - (p.value / maxLeft) * ch;
+      ctx.fillStyle = '#60a5fa';
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    ctx.strokeStyle = '#22c55e';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    rightSeries.forEach((p, i) => {
+      const x = left + stepX * i;
+      const y = top + ch - (p.value / maxRight) * ch;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    rightSeries.forEach((p, i) => {
+      const x = left + stepX * i;
+      const y = top + ch - (p.value / maxRight) * ch;
+      ctx.fillStyle = '#22c55e';
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    for (let i = 0; i < count; i++) {
+      const x = left + stepX * i;
+      const label = leftSeries[i]?.label || rightSeries[i]?.label || '';
+      ctx.fillStyle = '#93a0b4';
+      ctx.font = '11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(label, x, h - 10);
+    }
+
+    ctx.fillStyle = '#60a5fa';
+    ctx.fillRect(left, 6, 12, 3);
+    ctx.fillStyle = '#cfe5ff';
+    ctx.font = '11px sans-serif';
     ctx.textAlign = 'left';
-    for (let i = 0; i <= 4; i++) {
-      const value = Math.round((rightMax * (4 - i)) / 4);
-      const y = padding.top + (chartHeight * i) / 4;
-      ctx.fillText(String(value), width - padding.right + 6, y);
-    }
+    ctx.fillText('総挙上量', left + 16, 10);
 
-    ctx.strokeStyle = '#d4af37';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    leftValues.forEach((v, i) => {
-      const x = xAt(i);
-      const y = yLeft(v);
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    });
-    ctx.stroke();
-
-    ctx.fillStyle = '#d4af37';
-    leftValues.forEach((v, i) => {
-      const x = xAt(i);
-      const y = yLeft(v);
-      ctx.beginPath();
-      ctx.arc(x, y, 3, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
-    ctx.strokeStyle = '#f3f3f3';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    rightValues.forEach((v, i) => {
-      const x = xAt(i);
-      const y = yRight(v);
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    });
-    ctx.stroke();
-
-    ctx.fillStyle = '#f3f3f3';
-    rightValues.forEach((v, i) => {
-      const x = xAt(i);
-      const y = yRight(v);
-      ctx.beginPath();
-      ctx.arc(x, y, 3, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
-    ctx.fillStyle = '#9a9a9a';
-    ctx.font = '10px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    labels.forEach((label, i) => {
-      ctx.fillText(label, xAt(i), height - padding.bottom + 8);
-    });
+    ctx.fillStyle = '#22c55e';
+    ctx.fillRect(left + 98, 6, 12, 3);
+    ctx.fillStyle = '#d6ffe4';
+    ctx.fillText('平均重量', left + 114, 10);
   }
 };

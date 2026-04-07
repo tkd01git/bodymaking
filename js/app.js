@@ -7,8 +7,7 @@ const state = {
   selectedDate: todayStr,
   selectedHistoryDate: todayStr,
   selectedHistoryRange: 'daily',
-  selectedCalendarMetric: 'total',
-  selectedSummaryMetric: 'total',
+  selectedHistoryMetric: 'total',
   calendarCursor: {
     year: today.getFullYear(),
     month: today.getMonth()
@@ -19,8 +18,10 @@ const state = {
   profile: JSON.parse(localStorage.getItem('liftflow-profile') || 'null') || structuredClone(window.DEFAULT_PROFILE),
   setRecords: { ...(window.USE_SAMPLE_DATA ? window.sampleSetRecords : {}), ...JSON.parse(localStorage.getItem('liftflow-set-records') || '{}') },
   restRemaining: 120,
+  restEndAt: null,
   restTimer: null,
-  rootMode: 'record'
+  rootMode: 'record',
+  audioCtx: null
 };
 
 const el = {
@@ -48,9 +49,8 @@ const el = {
   suggestionCard: document.getElementById('suggestionCard'),
   dailyAiText: document.getElementById('dailyAiText'),
   calendarGrid: document.getElementById('calendarGrid'),
-  calendarMetricSelect: document.getElementById('calendarMetricSelect'),
   calendarMonthLabel: document.getElementById('calendarMonthLabel'),
-  summaryMetricSelect: document.getElementById('summaryMetricSelect'),
+  historyMetricSelect: document.getElementById('historyMetricSelect'),
   summaryVolume: document.getElementById('summaryVolume'),
   summaryAvgWeight: document.getElementById('summaryAvgWeight'),
   summaryReps: document.getElementById('summaryReps'),
@@ -185,15 +185,60 @@ function getMetricOptions() {
 function populateMetricSelect(selectEl, selectedValue) {
   if (!selectEl) return;
   const options = getMetricOptions();
-  selectEl.innerHTML = options
-    .map(opt => `<option value="${opt.value}">${opt.label}</option>`)
-    .join('');
+  selectEl.innerHTML = options.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join('');
   selectEl.value = selectedValue;
 }
 
 function getMetricLabel(metric) {
-  if (metric === 'total') return '全種目';
-  return metric;
+  return metric === 'total' ? '全種目' : metric;
+}
+
+function getRangeWindowDates(anchorDateStr, rangeType) {
+  const anchor = new Date(`${anchorDateStr}T00:00:00`);
+  let days = 1;
+  if (rangeType === 'weekly') days = 7;
+  if (rangeType === 'monthly') days = 30;
+
+  const dates = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(anchor);
+    d.setDate(anchor.getDate() - i);
+    dates.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+  }
+  return dates;
+}
+
+function getRangeSummary(anchorDateStr, rangeType, metric = 'total') {
+  const dates = getRangeWindowDates(anchorDateStr, rangeType);
+  const allRecords = dates.flatMap(date => getRecordsForDateAndMetric(date, metric));
+
+  return {
+    totalVolume: allRecords.reduce((sum, r) => sum + r.reps * r.weight, 0),
+    avgWeight: allRecords.length
+      ? Math.round((allRecords.reduce((sum, r) => sum + r.weight, 0) / allRecords.length) * 10) / 10
+      : 0,
+    totalReps: allRecords.reduce((sum, r) => sum + r.reps, 0),
+    setCount: allRecords.length
+  };
+}
+
+function buildAnchorsBackwards(rangeType) {
+  const dates = getAllDatesWithTraining();
+  if (!dates.length) return [];
+
+  const latest = new Date(`${state.selectedHistoryDate}T00:00:00`);
+  const earliest = new Date(`${dates[0]}T00:00:00`);
+  const step = rangeType === 'daily' ? 1 : rangeType === 'weekly' ? 7 : 30;
+
+  const anchors = [];
+  const cursor = new Date(latest);
+
+  while (cursor >= earliest) {
+    anchors.unshift(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}-${String(cursor.getDate()).padStart(2, '0')}`);
+    cursor.setDate(cursor.getDate() - step);
+  }
+
+  return anchors;
 }
 
 function makeSuggestion(exerciseName) {
@@ -209,11 +254,14 @@ function makeSuggestion(exerciseName) {
 }
 
 function makeRecoverySuggestion() {
-  const todayVol = getTotalVolumeForDate(state.selectedDate);
+  const dates = getAllDatesWithTraining();
+  const allRecords = dates.flatMap(date => getRecordsForDate(date));
+  const totalVolume = allRecords.reduce((sum, r) => sum + r.reps * r.weight, 0);
+
   return {
-    text: todayVol > 0
-      ? '今日の負荷を踏まえると、回復を優先して睡眠と食事を丁寧に整えるのがおすすめです。'
-      : '今日は軽めなので、無理をせず体調管理を優先して次回に備えましょう。'
+    text: totalVolume > 0
+      ? 'これまでの履歴全体を見ると、睡眠・食事・疲労管理を丁寧に整えるのが回復面で重要です。'
+      : 'まだ記録が少ないので、まずは無理のない頻度で継続しながら回復習慣を整えていきましょう。'
   };
 }
 
@@ -287,23 +335,11 @@ function formatRecordTimestamp(record) {
   if (record.loggedAt) {
     const dt = new Date(record.loggedAt);
     if (!Number.isNaN(dt.getTime())) {
-      const y = dt.getFullYear();
-      const m = dt.getMonth() + 1;
-      const d = dt.getDate();
-      const hh = String(dt.getHours()).padStart(2, '0');
-      const mm = String(dt.getMinutes()).padStart(2, '0');
-      return `${y}/${m}/${d} ${hh}:${mm}`;
+      return `${dt.getFullYear()}/${dt.getMonth() + 1}/${dt.getDate()} ${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
     }
   }
-
-  if (record.date === '2026-04-06') {
-    return '2026年4月6日 17:00';
-  }
-
-  if (record.date) {
-    return `${record.date} -`;
-  }
-
+  if (record.date === '2026-04-06') return '2026年4月6日 17:00';
+  if (record.date) return `${record.date} -`;
   return '-';
 }
 
@@ -338,11 +374,8 @@ function renderSetRecords() {
     const arr = state.setRecords[getSetKey(state.selectedDate, state.selectedExercise)] || [];
     arr.splice(Number(btn.dataset.remove), 1);
 
-    if (!arr.length) {
-      delete state.setRecords[getSetKey(state.selectedDate, state.selectedExercise)];
-    } else {
-      state.setRecords[getSetKey(state.selectedDate, state.selectedExercise)] = arr;
-    }
+    if (!arr.length) delete state.setRecords[getSetKey(state.selectedDate, state.selectedExercise)];
+    else state.setRecords[getSetKey(state.selectedDate, state.selectedExercise)] = arr;
 
     saveLocal();
     renderSetRecords();
@@ -350,6 +383,7 @@ function renderSetRecords() {
     renderHistorySummary();
     renderCalendar();
     await saveRecordsEveryTime();
+    await refreshAiSuggestions();
   }));
 
   renderRecordHistoryToggle();
@@ -366,7 +400,6 @@ async function renderTraining() {
   renderSetRecords();
   renderBodyMap();
   renderTrainingTrend();
-  await refreshAiSuggestions();
 }
 
 function renderTrainingTrend() {
@@ -389,66 +422,22 @@ function renderTrainingTrend() {
 }
 
 function aggregateSeries(range, metric = 'total') {
-  const dates = getAllDatesWithTraining();
-  if (!dates.length) return { left: [], right: [] };
-
-  if (range === 'daily') {
-    return {
-      left: dates.map(d => ({
-        label: `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`,
-        value: getTotalVolumeForDate(d, metric)
-      })),
-      right: dates.map(d => ({
-        label: `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`,
-        value: getAvgWeightForDate(d, metric)
-      }))
-    };
-  }
-
-  if (range === 'weekly') {
-    const weeks = {};
-    dates.forEach(d => {
-      const dt = new Date(d + 'T00:00:00');
-      const start = new Date(dt);
-      start.setDate(dt.getDate() - dt.getDay());
-      const key = `${start.getMonth() + 1}/${start.getDate()}`;
-
-      if (!weeks[key]) weeks[key] = { volume: 0, avgList: [] };
-      weeks[key].volume += getTotalVolumeForDate(d, metric);
-
-      const avg = getAvgWeightForDate(d, metric);
-      if (avg) weeks[key].avgList.push(avg);
-    });
-
-    const keys = Object.keys(weeks);
-    return {
-      left: keys.map(k => ({ label: k, value: weeks[k].volume })),
-      right: keys.map(k => ({
-        label: k,
-        value: Math.round((weeks[k].avgList.reduce((a, b) => a + b, 0) / Math.max(weeks[k].avgList.length, 1)) * 10) / 10
-      }))
-    };
-  }
-
-  const months = {};
-  dates.forEach(d => {
-    const dt = new Date(d + 'T00:00:00');
-    const key = `${dt.getMonth() + 1}月`;
-
-    if (!months[key]) months[key] = { volume: 0, avgList: [] };
-    months[key].volume += getTotalVolumeForDate(d, metric);
-
-    const avg = getAvgWeightForDate(d, metric);
-    if (avg) months[key].avgList.push(avg);
-  });
-
-  const keys = Object.keys(months);
+  const anchors = buildAnchorsBackwards(range);
   return {
-    left: keys.map(k => ({ label: k, value: months[k].volume })),
-    right: keys.map(k => ({
-      label: k,
-      value: Math.round((months[k].avgList.reduce((a, b) => a + b, 0) / Math.max(months[k].avgList.length, 1)) * 10) / 10
-    }))
+    left: anchors.map(anchor => {
+      const summary = getRangeSummary(anchor, range, metric);
+      return {
+        label: range === 'daily' ? `${anchor.slice(5, 7)}/${anchor.slice(8, 10)}` : `${anchor.slice(5, 7)}/${anchor.slice(8, 10)}`,
+        value: summary.totalVolume
+      };
+    }),
+    right: anchors.map(anchor => {
+      const summary = getRangeSummary(anchor, range, metric);
+      return {
+        label: range === 'daily' ? `${anchor.slice(5, 7)}/${anchor.slice(8, 10)}` : `${anchor.slice(5, 7)}/${anchor.slice(8, 10)}`,
+        value: summary.avgWeight
+      };
+    })
   };
 }
 
@@ -477,7 +466,7 @@ function renderCalendar() {
 
   for (let d = 1; d <= lastDate; d++) {
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-    const metric = getTotalVolumeForDate(dateStr, state.selectedCalendarMetric);
+    const metric = getTotalVolumeForDate(dateStr, state.selectedHistoryMetric);
 
     const btn = document.createElement('button');
     btn.className = 'day';
@@ -496,13 +485,13 @@ function renderCalendar() {
 }
 
 function renderHistorySummary() {
-  const date = state.selectedHistoryDate;
-  const metric = state.selectedSummaryMetric;
+  const metric = state.selectedHistoryMetric;
+  const summary = getRangeSummary(state.selectedHistoryDate, state.selectedHistoryRange, metric);
 
-  el.summaryVolume.textContent = getTotalVolumeForDate(date, metric) || '-';
-  el.summaryAvgWeight.textContent = getAvgWeightForDate(date, metric) || '-';
-  el.summaryReps.textContent = getTotalRepsForDate(date, metric) || '-';
-  el.summarySets.textContent = getSetCountForDate(date, metric) || '-';
+  el.summaryVolume.textContent = summary.totalVolume || '-';
+  el.summaryAvgWeight.textContent = summary.avgWeight || '-';
+  el.summaryReps.textContent = summary.totalReps || '-';
+  el.summarySets.textContent = summary.setCount || '-';
 
   const aggregated = aggregateSeries(state.selectedHistoryRange, metric);
   const leftWindow = getWindowedSeries(aggregated.left, state.chartOffset, state.chartWindowSize);
@@ -518,9 +507,40 @@ function renderRootMode() {
   el.historyRoot.classList.toggle('hidden', state.rootMode !== 'history');
 }
 
+function getAudioContext() {
+  if (!state.audioCtx) {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (AudioCtx) state.audioCtx = new AudioCtx();
+  }
+  return state.audioCtx;
+}
+
+async function primeAudio() {
+  try {
+    const ctx = getAudioContext();
+    if (ctx && ctx.state === 'suspended') await ctx.resume();
+  } catch (e) {
+    console.error(e);
+  }
+}
+
 function syncRestFromInput() {
   state.restRemaining = Math.max(0, Number(el.restMin.value || 0) * 60 + Number(el.restSec.value || 0));
   renderRest();
+}
+
+function updateRestFromTarget() {
+  if (!state.restEndAt) return;
+  const diff = Math.max(0, Math.ceil((state.restEndAt - Date.now()) / 1000));
+  state.restRemaining = diff;
+  renderRest();
+
+  if (diff <= 0) {
+    clearInterval(state.restTimer);
+    state.restTimer = null;
+    state.restEndAt = null;
+    notifyRestEnd();
+  }
 }
 
 function renderRest() {
@@ -529,11 +549,12 @@ function renderRest() {
   el.restDisplay.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-function notifyRestEnd() {
+async function notifyRestEnd() {
   try {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (AudioCtx) {
-      const ctx = new AudioCtx();
+    const ctx = getAudioContext();
+    if (ctx) {
+      if (ctx.state === 'suspended') await ctx.resume();
+
       const playTone = (freq, start, duration) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -542,11 +563,12 @@ function notifyRestEnd() {
         osc.connect(gain);
         gain.connect(ctx.destination);
         gain.gain.setValueAtTime(0.0001, start);
-        gain.gain.exponentialRampToValueAtTime(0.12, start + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.14, start + 0.01);
         gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
         osc.start(start);
         osc.stop(start + duration);
       };
+
       const now = ctx.currentTime;
       playTone(880, now, 0.18);
       playTone(1174, now + 0.18, 0.18);
@@ -556,27 +578,23 @@ function notifyRestEnd() {
     console.error(e);
   }
 
-  if (navigator.vibrate) {
-    navigator.vibrate([150, 80, 150, 80, 250]);
-  }
-
+  if (navigator.vibrate) navigator.vibrate([150, 80, 150, 80, 250]);
   flashGold(el.timerCard);
 }
 
-function startRestTimer() {
+async function startRestTimer() {
+  await primeAudio();
   clearInterval(state.restTimer);
+
   if (state.restRemaining <= 0) syncRestFromInput();
   flashGold(el.timerCard);
 
+  state.restEndAt = Date.now() + state.restRemaining * 1000;
+  updateRestFromTarget();
+
   state.restTimer = setInterval(() => {
-    state.restRemaining -= 1;
-    renderRest();
-    if (state.restRemaining <= 0) {
-      clearInterval(state.restTimer);
-      state.restTimer = null;
-      notifyRestEnd();
-    }
-  }, 1000);
+    updateRestFromTarget();
+  }, 250);
 }
 
 async function saveRecordsEveryTime() {
@@ -588,6 +606,8 @@ async function saveRecordsEveryTime() {
 }
 
 async function addSetRecord() {
+  await primeAudio();
+
   const key = getSetKey(state.selectedDate, state.selectedExercise);
   const arr = state.setRecords[key] || [];
 
@@ -606,8 +626,9 @@ async function addSetRecord() {
   renderCalendar();
   flashGold(el.recordCard);
   syncRestFromInput();
-  startRestTimer();
+  await startRestTimer();
   await saveRecordsEveryTime();
+  await refreshAiSuggestions();
 }
 
 function initSelectors() {
@@ -631,10 +652,7 @@ function initSelectors() {
 
   el.muscleGroupSelect.value = state.selectedGroup;
   el.exerciseSelect.value = state.selectedExercise;
-
-  populateMetricSelect(el.calendarMetricSelect, state.selectedCalendarMetric);
-  populateMetricSelect(el.summaryMetricSelect, state.selectedSummaryMetric);
-
+  populateMetricSelect(el.historyMetricSelect, state.selectedHistoryMetric);
   renderRecordHistoryToggle();
 }
 
@@ -644,6 +662,7 @@ async function initializeApp() {
   syncRestFromInput();
   renderRootMode();
   await renderTraining();
+  await refreshAiSuggestions();
   renderCalendar();
   renderHistorySummary();
 
@@ -652,7 +671,8 @@ async function initializeApp() {
   }
 }
 
-document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
+document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', async () => {
+  await primeAudio();
   state.rootMode = tab.dataset.tab;
   renderRootMode();
   if (state.rootMode === 'history') {
@@ -668,17 +688,11 @@ document.querySelectorAll('.segment').forEach(seg => seg.addEventListener('click
   renderHistorySummary();
 }));
 
-if (el.calendarMetricSelect) {
-  el.calendarMetricSelect.addEventListener('change', e => {
-    state.selectedCalendarMetric = e.target.value;
-    renderCalendar();
-  });
-}
-
-if (el.summaryMetricSelect) {
-  el.summaryMetricSelect.addEventListener('change', e => {
-    state.selectedSummaryMetric = e.target.value;
+if (el.historyMetricSelect) {
+  el.historyMetricSelect.addEventListener('change', e => {
+    state.selectedHistoryMetric = e.target.value;
     state.chartOffset = 0;
+    renderCalendar();
     renderHistorySummary();
   });
 }
@@ -705,7 +719,7 @@ if (el.prevMonthBtn && el.nextMonthBtn) {
 
 if (el.prevChartBtn && el.nextChartBtn) {
   el.prevChartBtn.addEventListener('click', () => {
-    const aggregated = aggregateSeries(state.selectedHistoryRange, state.selectedSummaryMetric);
+    const aggregated = aggregateSeries(state.selectedHistoryRange, state.selectedHistoryMetric);
     if (state.chartOffset + state.chartWindowSize < aggregated.left.length) {
       state.chartOffset += state.chartWindowSize;
       renderHistorySummary();
@@ -727,18 +741,22 @@ if (el.toggleRecordHistoryBtn) {
 
 if (el.muscleGroupSelect) {
   el.muscleGroupSelect.addEventListener('change', async e => {
+    await primeAudio();
     state.selectedGroup = e.target.value;
     renderExerciseOptions();
     el.exerciseSelect.value = state.selectedExercise;
     await renderTraining();
+    await refreshAiSuggestions();
     flashGold(el.suggestionCard);
   });
 }
 
 if (el.exerciseSelect) {
   el.exerciseSelect.addEventListener('change', async e => {
+    await primeAudio();
     state.selectedExercise = e.target.value;
     await renderTraining();
+    await refreshAiSuggestions();
     flashGold(el.suggestionCard);
   });
 }
@@ -746,9 +764,11 @@ if (el.exerciseSelect) {
 el.restMin.addEventListener('input', syncRestFromInput);
 el.restSec.addEventListener('input', syncRestFromInput);
 el.restStart.addEventListener('click', startRestTimer);
-el.restReset.addEventListener('click', () => {
+el.restReset.addEventListener('click', async () => {
+  await primeAudio();
   clearInterval(state.restTimer);
   state.restTimer = null;
+  state.restEndAt = null;
   syncRestFromInput();
   flashGold(el.timerCard);
 });
@@ -783,6 +803,20 @@ el.saveProfileBtn.addEventListener('click', async () => {
   }
   closeSetupModal();
   await refreshAiSuggestions();
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (state.restEndAt) updateRestFromTarget();
+});
+
+window.addEventListener('focus', () => {
+  if (state.restEndAt) updateRestFromTarget();
+});
+
+['touchstart', 'click', 'keydown'].forEach(evt => {
+  window.addEventListener(evt, () => {
+    primeAudio();
+  }, { passive: true });
 });
 
 initializeApp();

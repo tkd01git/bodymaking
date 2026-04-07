@@ -69,7 +69,9 @@ const el = {
   prevMonthBtn: document.getElementById('prevMonthBtn'),
   nextMonthBtn: document.getElementById('nextMonthBtn'),
   toggleRecordHistoryBtn: document.getElementById('toggleRecordHistoryBtn'),
-  recordHistoryPanel: document.getElementById('recordHistoryPanel')
+  recordHistoryPanel: document.getElementById('recordHistoryPanel'),
+  planAiBtn: document.getElementById('planAiBtn'),
+  recoveryAiBtn: document.getElementById('recoveryAiBtn')
 };
 
 const { getSetKey, dateDiffDays, flashGold, drawDualChart } = window.helpers;
@@ -265,12 +267,9 @@ function makeRecoverySuggestion() {
   };
 }
 
-async function refreshAiSuggestions() {
+async function fetchPlanAiComment() {
   if (!state.selectedExercise) {
-    el.goalSets.textContent = '-';
-    el.goalReps.textContent = '-';
-    el.aiSuggestionText.textContent = '種目を選択するとAI提案を表示します。';
-    el.dailyAiText.textContent = '種目を選択すると回復コメントを表示します。';
+    el.aiSuggestionText.textContent = '種目を選択してください。';
     return;
   }
 
@@ -281,6 +280,8 @@ async function refreshAiSuggestions() {
     records: state.setRecords,
     variationSeed: Date.now()
   };
+
+  el.aiSuggestionText.textContent = '生成中...';
 
   try {
     const training = await window.aiApi.getTrainingPlan(payload);
@@ -293,6 +294,23 @@ async function refreshAiSuggestions() {
     el.goalReps.textContent = fallback.goalReps;
     el.aiSuggestionText.textContent = fallback.text;
   }
+}
+
+async function fetchRecoveryAiComment() {
+  if (!state.selectedExercise) {
+    el.dailyAiText.textContent = '種目を選択してください。';
+    return;
+  }
+
+  const payload = {
+    profile: state.profile,
+    selectedExercise: state.selectedExercise,
+    selectedDate: state.selectedDate,
+    records: state.setRecords,
+    variationSeed: Date.now()
+  };
+
+  el.dailyAiText.textContent = '生成中...';
 
   try {
     const recovery = await window.aiApi.getRecoveryPlan(payload);
@@ -407,7 +425,6 @@ function renderSetRecords() {
     renderHistorySummary();
     renderCalendar();
     await saveRecordsEveryTime();
-    await refreshAiSuggestions();
   }));
 
   renderRecordHistoryToggle();
@@ -418,6 +435,10 @@ async function renderTraining() {
     el.exerciseName.textContent = '-';
     el.lastPerformed.textContent = '前回実施: -';
     el.muscleNames.innerHTML = '';
+    el.goalSets.textContent = '-';
+    el.goalReps.textContent = '-';
+    el.aiSuggestionText.textContent = '';
+    el.dailyAiText.textContent = '';
     renderSetRecords();
     renderBodyMap();
     renderTrainingTrend();
@@ -429,6 +450,10 @@ async function renderTraining() {
   el.exerciseName.textContent = state.selectedExercise;
   el.lastPerformed.textContent = lastPerformed ? `前回実施: ${lastPerformed}` : '前回実施: -';
   el.muscleNames.innerHTML = ex.muscles.map(m => `<span class="muscle-pill">${m}</span>`).join('');
+  el.goalSets.textContent = '-';
+  el.goalReps.textContent = '-';
+  el.aiSuggestionText.textContent = '';
+  el.dailyAiText.textContent = '';
   renderSetRecords();
   renderBodyMap();
   renderTrainingTrend();
@@ -436,26 +461,30 @@ async function renderTraining() {
 
 function renderTrainingTrend() {
   if (!state.selectedExercise) {
-    el.trainingTrendTitle.textContent = 'Selected Exercise × Avg Weight';
+    el.trainingTrendTitle.textContent = 'Selected Exercise';
     drawDualChart(el.trainingTrendCanvas, [], []);
     return;
   }
 
-  const exerciseName = state.selectedExercise;
-  const exerciseRecords = getRecordsForExercise(exerciseName);
-  const dates = [...new Set(exerciseRecords.map(r => r.date))].sort().slice(-6);
+  const dates = [];
+  const anchor = new Date(`${state.selectedDate}T00:00:00`);
+  for (let i = 4; i >= 0; i--) {
+    const d = new Date(anchor);
+    d.setDate(anchor.getDate() - i);
+    dates.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+  }
 
   const left = dates.map(d => ({
     label: `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`,
-    value: getTotalVolumeForDate(d, exerciseName)
+    value: getTotalVolumeForDate(d, state.selectedExercise)
   }));
 
   const right = dates.map(d => ({
     label: `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`,
-    value: getAvgWeightForDate(d, exerciseName)
+    value: getAvgWeightForDate(d, state.selectedExercise)
   }));
 
-  el.trainingTrendTitle.textContent = `${exerciseName} 総重量 × 平均重量`;
+  el.trainingTrendTitle.textContent = state.selectedExercise;
   drawDualChart(el.trainingTrendCanvas, left, right);
 }
 
@@ -535,7 +564,7 @@ function renderHistorySummary() {
   const leftWindow = getWindowedSeries(aggregated.left, state.chartOffset, state.chartWindowSize);
   const rightWindow = getWindowedSeries(aggregated.right, state.chartOffset, state.chartWindowSize);
 
-  el.historyTrendTitle.textContent = `${getMetricLabel(metric)} 総重量 × 平均重量`;
+  el.historyTrendTitle.textContent = `${getMetricLabel(metric)}`;
   drawDualChart(el.historyComboCanvas, leftWindow, rightWindow);
 }
 
@@ -667,7 +696,6 @@ async function addSetRecord() {
   syncRestFromInput();
   await startRestTimer();
   await saveRecordsEveryTime();
-  await refreshAiSuggestions();
 }
 
 function initSelectors() {
@@ -702,7 +730,6 @@ async function initializeApp() {
   syncRestFromInput();
   renderRootMode();
   await renderTraining();
-  await refreshAiSuggestions();
   renderCalendar();
   renderHistorySummary();
 
@@ -786,7 +813,6 @@ if (el.muscleGroupSelect) {
     state.selectedExercise = '';
     renderExerciseOptions();
     await renderTraining();
-    await refreshAiSuggestions();
     flashGold(el.suggestionCard);
   });
 }
@@ -796,9 +822,16 @@ if (el.exerciseSelect) {
     await primeAudio();
     state.selectedExercise = e.target.value;
     await renderTraining();
-    await refreshAiSuggestions();
     flashGold(el.suggestionCard);
   });
+}
+
+if (el.planAiBtn) {
+  el.planAiBtn.addEventListener('click', fetchPlanAiComment);
+}
+
+if (el.recoveryAiBtn) {
+  el.recoveryAiBtn.addEventListener('click', fetchRecoveryAiComment);
 }
 
 el.restMin.addEventListener('input', syncRestFromInput);
@@ -842,7 +875,6 @@ el.saveProfileBtn.addEventListener('click', async () => {
     console.error(e);
   }
   closeSetupModal();
-  await refreshAiSuggestions();
 });
 
 document.addEventListener('visibilitychange', () => {

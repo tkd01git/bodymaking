@@ -1,9 +1,0 @@
-{
-  "name": "liftflow-vercel-backend",
-  "private": true,
-  "type": "module",
-  "dependencies": {
-    "googleapis": "^144.0.0",
-    "openai": "^4.56.0"
-  }
-}

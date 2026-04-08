@@ -57,7 +57,9 @@ window.DRIVE_ENDPOINTS = {
   loadProfile: '/api/drive/profile/load',
   saveProfile: '/api/drive/profile/save',
   loadRecords: '/api/drive/records/load',
-  saveRecords: '/api/drive/records/save'
+  saveRecords: '/api/drive/records/save',
+  loadSleeping: '/api/drive/sleeping/load',
+  saveSleeping: '/api/drive/sleeping/save'
 };
 
 window.USE_SAMPLE_DATA = false;

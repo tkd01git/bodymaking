@@ -7,10 +7,8 @@
   --line: #232323;
   --line2: #343434;
   --accent: #3f3f46;
-  --accent-soft: #1a1a1a;
   --danger: #ef4444;
   --gold: #d4af37;
-  --gold-soft: #7a6320;
 }
 
 * {
@@ -30,10 +28,7 @@ body {
   padding: 14px 14px 28px;
 }
 
-h1,
-h2,
-h3,
-p {
+h1, h2, h3, p {
   margin: 0;
 }
 
@@ -42,7 +37,6 @@ p {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 12px;
-  position: relative;
 }
 
 .hero-actions {
@@ -123,7 +117,8 @@ label {
 
 input,
 select,
-button {
+button,
+textarea {
   width: 100%;
   border: 1px solid var(--line2);
   background: #0e0e0e;
@@ -131,6 +126,10 @@ button {
   border-radius: 12px;
   padding: 11px 12px;
   font: inherit;
+}
+
+textarea {
+  resize: vertical;
 }
 
 button {
@@ -162,7 +161,8 @@ button {
 }
 
 .goal-box,
-.summary-box {
+.summary-box,
+.detail-item {
   background: #101010;
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -171,31 +171,25 @@ button {
 }
 
 .goal-label,
-.summary-label {
+.summary-label,
+.detail-label {
   font-size: 11px;
   color: var(--muted);
 }
 
 .goal-value,
-.summary-value {
+.summary-value,
+.detail-value {
   font-size: 22px;
   font-weight: 900;
   margin-top: 4px;
 }
 
-.summary-grid {
+.summary-grid,
+.detail-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 8px;
-}
-
-.ai-action-row {
-  margin-top: 12px;
-}
-
-.ai-action-btn {
-  width: 100%;
-  justify-content: center;
 }
 
 .ai-box {
@@ -208,6 +202,11 @@ button {
   font-size: 13px;
   line-height: 1.6;
   min-height: 48px;
+}
+
+.ai-action-btn {
+  width: 100%;
+  justify-content: center;
 }
 
 .timer-mini {
@@ -268,7 +267,8 @@ button {
   margin-top: 10px;
 }
 
-.record-item {
+.record-item,
+.sleep-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -280,11 +280,13 @@ button {
   margin-top: 8px;
 }
 
-.record-main {
+.record-main,
+.sleep-main {
   font-weight: 700;
 }
 
-.record-sub {
+.record-sub,
+.sleep-sub {
   font-size: 12px;
   color: var(--muted);
   margin-top: 2px;
@@ -516,6 +518,18 @@ canvas {
     0 0 0 2px rgba(212, 175, 55, 0.08);
 }
 
+.sleep-edit-panel {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.sleep-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 @media (max-width: 420px) {
   .setup-grid {
     grid-template-columns: 1fr;
@@ -525,7 +539,9 @@ canvas {
 @media (max-width: 380px) {
   .goal-grid,
   .summary-grid,
-  .segmented {
+  .detail-grid,
+  .segmented,
+  .tabs {
     grid-template-columns: 1fr;
   }
 
@@ -538,6 +554,10 @@ canvas {
   }
 
   .mini-actions {
+    flex-direction: column;
+  }
+
+  .sleep-actions {
     flex-direction: column;
   }
 }

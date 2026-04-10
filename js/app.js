@@ -41,17 +41,14 @@ const state = {
 };
 
 const el = {
-  // Tabs
   trainingSubTabs: document.getElementById('trainingSubTabs'),
   recoverySubTabs: document.getElementById('recoverySubTabs'),
 
-  // Roots
   workoutRoot: document.getElementById('workoutRoot'),
   trainingArchiveRoot: document.getElementById('trainingArchiveRoot'),
   sleepingRoot: document.getElementById('sleepingRoot'),
   recoveryArchiveRoot: document.getElementById('recoveryArchiveRoot'),
 
-  // Workout
   muscleGroupSelect: document.getElementById('muscleGroupSelect'),
   exerciseSelect: document.getElementById('exerciseSelect'),
   exerciseName: document.getElementById('exerciseName'),
@@ -59,6 +56,9 @@ const el = {
   goalSets: document.getElementById('goalSets'),
   goalReps: document.getElementById('goalReps'),
   muscleNames: document.getElementById('muscleNames'),
+  planAiCommentBtn: document.getElementById('planAiCommentBtn'),
+  planAiText: document.getElementById('planAiText'),
+
   restDisplay: document.getElementById('restDisplay'),
   restMin: document.getElementById('restMin'),
   restSec: document.getElementById('restSec'),
@@ -76,7 +76,6 @@ const el = {
   toggleRecordHistoryBtn: document.getElementById('toggleRecordHistoryBtn'),
   recordHistoryPanel: document.getElementById('recordHistoryPanel'),
 
-  // Training archive
   calendarGrid: document.getElementById('calendarGrid'),
   calendarMonthLabel: document.getElementById('calendarMonthLabel'),
   historyMetricSelect: document.getElementById('historyMetricSelect'),
@@ -91,7 +90,6 @@ const el = {
   prevChartBtn: document.getElementById('prevChartBtn'),
   nextChartBtn: document.getElementById('nextChartBtn'),
 
-  // Sleeping
   sleepStartBtn: document.getElementById('sleepStartBtn'),
   sleepWakeBtn: document.getElementById('sleepWakeBtn'),
   sleepStatusText: document.getElementById('sleepStatusText'),
@@ -103,7 +101,6 @@ const el = {
   morningMemo: document.getElementById('morningMemo'),
   sleepRecentList: document.getElementById('sleepRecentList'),
 
-  // Recovery archive
   sleepCalendarGrid: document.getElementById('sleepCalendarGrid'),
   sleepCalendarMonthLabel: document.getElementById('sleepCalendarMonthLabel'),
   prevSleepMonthBtn: document.getElementById('prevSleepMonthBtn'),
@@ -120,7 +117,6 @@ const el = {
   sleepDurationCanvas: document.getElementById('sleepDurationCanvas'),
   sleepTimingCanvas: document.getElementById('sleepTimingCanvas'),
 
-  // Global
   openSetupBtn: document.getElementById('openSetupBtn'),
   driveSyncBtn: document.getElementById('driveSyncBtn'),
   setupModal: document.getElementById('setupModal'),
@@ -159,16 +155,78 @@ function saveProfileLocal(profile) {
   localStorage.setItem('liftflow-profile', JSON.stringify(profile));
 }
 
+function getDateStringFromIso(iso) {
+  const dt = new Date(iso);
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+}
+
 function normalizeSleepRecords(records) {
   if (!Array.isArray(records)) return [];
-  return records.map((r, idx) => ({
-    id: r.id || `sleep_${idx}_${Date.now()}`,
-    sleepAt: r.sleepAt || null,
-    wakeAt: r.wakeAt || null,
-    durationMinutes: r.durationMinutes ?? null,
-    wakeDate: r.wakeDate || (r.wakeAt ? getDateStringFromIso(r.wakeAt) : null),
-    source: r.source || 'manual'
-  }));
+  return records
+    .map((r, idx) => ({
+      id: r.id || `sleep_${idx}_${Date.now()}`,
+      sleepAt: r.sleepAt || null,
+      wakeAt: r.wakeAt || null,
+      durationMinutes: r.durationMinutes ?? (r.sleepAt && r.wakeAt ? calcDurationMinutes(r.sleepAt, r.wakeAt) : null),
+      wakeDate: r.wakeDate || (r.wakeAt ? getDateStringFromIso(r.wakeAt) : null),
+      source: r.source || 'manual'
+    }))
+    .filter(r => r.sleepAt);
+}
+
+function mergeSleepRecords(localRecords = [], driveRecords = []) {
+  const map = new Map();
+
+  [...driveRecords, ...localRecords].forEach(record => {
+    if (!record || !record.id) return;
+
+    const existing = map.get(record.id);
+
+    if (!existing) {
+      map.set(record.id, record);
+      return;
+    }
+
+    const existingWake = existing.wakeAt ? new Date(existing.wakeAt).getTime() : 0;
+    const nextWake = record.wakeAt ? new Date(record.wakeAt).getTime() : 0;
+
+    if (!existing.wakeAt && record.wakeAt) {
+      map.set(record.id, record);
+      return;
+    }
+
+    if (nextWake > existingWake) {
+      map.set(record.id, record);
+      return;
+    }
+
+    if ((record.durationMinutes || 0) > (existing.durationMinutes || 0)) {
+      map.set(record.id, record);
+    }
+  });
+
+  return [...map.values()].sort((a, b) => {
+    const aTime = new Date(a.wakeAt || a.sleepAt || 0).getTime();
+    const bTime = new Date(b.wakeAt || b.sleepAt || 0).getTime();
+    return aTime - bTime;
+  });
+}
+
+function calcDurationMinutes(sleepAt, wakeAt) {
+  const s = new Date(sleepAt).getTime();
+  const w = new Date(wakeAt).getTime();
+  return Math.max(0, Math.round((w - s) / 60000));
+}
+
+function buildSleepRecord({ id, sleepAt, wakeAt, source }) {
+  return {
+    id: id || `sleep_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    sleepAt,
+    wakeAt,
+    durationMinutes: wakeAt ? calcDurationMinutes(sleepAt, wakeAt) : null,
+    wakeDate: wakeAt ? getDateStringFromIso(wakeAt) : null,
+    source: source || 'manual'
+  };
 }
 
 async function loadDriveDataOnStartup() {
@@ -194,10 +252,13 @@ async function loadDriveDataOnStartup() {
 
   try {
     const sleepingRes = await window.driveApi.loadSleeping();
-    if (sleepingRes?.sleeping) {
-      state.sleepRecords = normalizeSleepRecords(sleepingRes.sleeping);
-      saveSleepLocal();
-    }
+    const driveSleeping = normalizeSleepRecords(sleepingRes?.sleeping || []);
+    const localSleeping = normalizeSleepRecords(
+      JSON.parse(localStorage.getItem('liftflow-sleep-records') || '[]')
+    );
+
+    state.sleepRecords = mergeSleepRecords(localSleeping, driveSleeping);
+    saveSleepLocal();
   } catch (e) {
     console.error('Drive sleeping load failed:', e);
   }
@@ -210,28 +271,6 @@ function openSetupModal() {
 
 function closeSetupModal() {
   el.setupModal.classList.add('hidden');
-}
-
-function getDateStringFromIso(iso) {
-  const dt = new Date(iso);
-  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
-}
-
-function calcDurationMinutes(sleepAt, wakeAt) {
-  const s = new Date(sleepAt).getTime();
-  const w = new Date(wakeAt).getTime();
-  return Math.max(0, Math.round((w - s) / 60000));
-}
-
-function buildSleepRecord({ id, sleepAt, wakeAt, source }) {
-  return {
-    id: id || `sleep_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-    sleepAt,
-    wakeAt,
-    durationMinutes: wakeAt ? calcDurationMinutes(sleepAt, wakeAt) : null,
-    wakeDate: wakeAt ? getDateStringFromIso(wakeAt) : null,
-    source: source || 'manual'
-  };
 }
 
 function getOpenSleepRecord() {
@@ -263,15 +302,6 @@ function getRecordsForDate(date) {
     .flatMap(key => {
       const exercise = key.split('__')[1];
       return state.setRecords[key].map(r => ({ ...r, exercise }));
-    });
-}
-
-function getRecordsForExercise(exerciseName) {
-  return Object.keys(state.setRecords)
-    .filter(key => key.endsWith(`__${exerciseName}`))
-    .flatMap(key => {
-      const date = key.split('__')[0];
-      return state.setRecords[key].map(r => ({ ...r, exercise: exerciseName, date }));
     });
 }
 
@@ -389,6 +419,18 @@ function makeSuggestion(exerciseName) {
   return { goalSets, goalReps, days };
 }
 
+function makePlanCommentFallback(exerciseName) {
+  if (!exerciseName) return '種目を選択してください。';
+  const suggestion = makeSuggestion(exerciseName);
+  if (suggestion.days <= 1) {
+    return '直近で同部位の刺激が入っている可能性があります。今日は可動域とフォームの安定を優先し、無理な重量更新は避けてください。';
+  }
+  if (suggestion.goalReps === '10-15') {
+    return '反動を抑えて対象筋に乗せ続けることを優先してください。トップで丁寧に止め、負荷が逃げないフォームを意識すると質が上がります。';
+  }
+  return 'メインセットではフォームを崩さず、狙ったレップ帯を確実に取り切ることを優先してください。最後まで出力を揃える意識が重要です。';
+}
+
 function makeRecoverySuggestion() {
   const dates = getAllDatesWithTraining();
   const allRecords = dates.flatMap(date => getRecordsForDate(date));
@@ -402,6 +444,34 @@ function makeRecoverySuggestion() {
     return { text: '直近のトレーニング量に対して睡眠がやや不足気味です。今日は入眠を早め、水分と食事を丁寧に整えましょう。' };
   }
   return { text: '睡眠と生活リズムを安定させることが回復の土台になります。起床時刻を一定に保つのがおすすめです。' };
+}
+
+async function fetchPlanAiComment() {
+  if (!state.selectedExercise) {
+    el.planAiText.textContent = '種目を選択してください。';
+    return;
+  }
+
+  const payload = {
+    profile: state.profile,
+    selectedExercise: state.selectedExercise,
+    selectedDate: state.selectedDate,
+    records: state.setRecords,
+    sleepRecords: state.sleepRecords,
+    variationSeed: Date.now()
+  };
+
+  el.planAiText.textContent = '生成中...';
+
+  try {
+    const training = await window.aiApi.getTrainingPlan(payload);
+    if (training.goalSets != null) el.goalSets.textContent = training.goalSets;
+    if (training.goalReps != null) el.goalReps.textContent = training.goalReps;
+    el.planAiText.textContent = training.text || makePlanCommentFallback(state.selectedExercise);
+  } catch (e) {
+    console.error(e);
+    el.planAiText.textContent = makePlanCommentFallback(state.selectedExercise);
+  }
 }
 
 async function fetchSleepingAiComment() {
@@ -533,6 +603,7 @@ async function renderWorkout() {
     el.muscleNames.innerHTML = '';
     el.goalSets.textContent = '-';
     el.goalReps.textContent = '-';
+    el.planAiText.textContent = '';
     renderSetRecords();
     renderBodyMap();
     renderTrainingTrend();
@@ -548,6 +619,7 @@ async function renderWorkout() {
   el.muscleNames.innerHTML = ex.muscles.map(m => `<span class="muscle-pill">${m}</span>`).join('');
   el.goalSets.textContent = suggestion.goalSets;
   el.goalReps.textContent = suggestion.goalReps;
+  el.planAiText.textContent = '';
 
   renderSetRecords();
   renderBodyMap();
@@ -736,11 +808,15 @@ function renderSleepRecentList() {
       const wakeAtValue = document.getElementById(`sleep-edit-wakeAt-${id}`).value;
 
       if (!sleepAtValue || !wakeAtValue) return;
+
       const sleepAt = new Date(sleepAtValue).toISOString();
       const wakeAt = new Date(wakeAtValue).toISOString();
       if (new Date(wakeAt) <= new Date(sleepAt)) return;
 
-      state.sleepRecords = state.sleepRecords.map(r => r.id === id ? buildSleepRecord({ ...r, sleepAt, wakeAt, source: r.source }) : r);
+      state.sleepRecords = state.sleepRecords.map(r =>
+        r.id === id ? buildSleepRecord({ ...r, sleepAt, wakeAt, source: r.source }) : r
+      );
+
       saveSleepLocal();
       renderSleepStatus();
       renderSleepRecentList();
@@ -978,9 +1054,15 @@ async function saveRecordsEveryTime() {
 
 async function saveSleepEveryTime() {
   try {
+    const latest = await window.driveApi.loadSleeping();
+    const driveSleeping = normalizeSleepRecords(latest?.sleeping || []);
+
+    state.sleepRecords = mergeSleepRecords(state.sleepRecords, driveSleeping);
+    saveSleepLocal();
+
     await window.driveApi.saveSleeping(state.sleepRecords);
   } catch (e) {
-    console.error(e);
+    console.error('Drive sleeping save failed:', e);
   }
 }
 
@@ -1259,6 +1341,8 @@ el.exerciseSelect.addEventListener('change', async e => {
   await renderWorkout();
   flashGold(el.suggestionCard);
 });
+
+el.planAiCommentBtn.addEventListener('click', fetchPlanAiComment);
 
 el.restMin.addEventListener('input', syncRestFromInput);
 el.restSec.addEventListener('input', syncRestFromInput);

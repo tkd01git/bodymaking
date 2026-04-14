@@ -283,7 +283,12 @@
 
       <div class="card stack">
         <div class="section-title">Recent Sleep Records</div>
-        <div class="record-list" id="sleepRecentList"></div>
+        <div class="record-history-toggle-wrap">
+          <button id="toggleSleepHistoryBtn" class="mini-btn record-history-toggle" type="button">Show Sleep History</button>
+        </div>
+        <div id="sleepHistoryPanel" class="record-history-panel hidden">
+          <div class="record-list" id="sleepRecentList"></div>
+        </div>
       </div>
     </div>
 

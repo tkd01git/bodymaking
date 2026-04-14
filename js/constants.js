@@ -22,12 +22,16 @@ window.EXERCISES = {
   'ランジ': { target:['quadFrontL','quadFrontR','gluteL','gluteR'], muscles:['大腿四頭筋','大臀筋','ハムストリングス'], lastDate:'', group:'legs', groupLabel:'脚' },
   'レッグプレス': { target:['quadFrontL','quadFrontR','gluteL','gluteR'], muscles:['大腿四頭筋','大臀筋'], lastDate:'', group:'legs', groupLabel:'脚' },
   'レッグカール': { target:['hamL','hamR'], muscles:['ハムストリングス'], lastDate:'', group:'legs', groupLabel:'脚' },
+  'ブルガリアンスクワット': { target:['quadFrontL','quadFrontR','gluteL','gluteR'], muscles:['大腿四頭筋','大臀筋','ハムストリングス'], lastDate:'', group:'legs', groupLabel:'脚' },
 
   'アームカール': { target:['shoulderFrontL','shoulderFrontR'], muscles:['上腕二頭筋'], lastDate:'', group:'arms', groupLabel:'腕' },
   'ハンマーカール': { target:['shoulderFrontL','shoulderFrontR'], muscles:['上腕二頭筋','腕橈骨筋'], lastDate:'', group:'arms', groupLabel:'腕' },
   'トライセプスプレスダウン': { target:['shoulderFrontL','shoulderFrontR'], muscles:['上腕三頭筋'], lastDate:'', group:'arms', groupLabel:'腕' },
   'スカルクラッシャー': { target:['shoulderFrontL','shoulderFrontR'], muscles:['上腕三頭筋'], lastDate:'', group:'arms', groupLabel:'腕' },
-  '三頭筋腕振り': { target:['shoulderFrontL','shoulderFrontR'], muscles:['上腕三頭筋'], lastDate:'', group:'arms', groupLabel:'腕' }
+  '三頭筋腕振り': { target:['shoulderFrontL','shoulderFrontR'], muscles:['上腕三頭筋'], lastDate:'', group:'arms', groupLabel:'腕' },
+
+  'クリーン': { target:['quadFrontL','quadFrontR','gluteL','gluteR','upperBack','shoulderFrontL','shoulderFrontR'], muscles:['大腿四頭筋','大臀筋','僧帽筋','三角筋','体幹'], lastDate:'', group:'full', groupLabel:'全身' },
+  'スナッチ': { target:['quadFrontL','quadFrontR','gluteL','gluteR','upperBack','shoulderFrontL','shoulderFrontR'], muscles:['大腿四頭筋','大臀筋','僧帽筋','三角筋','体幹'], lastDate:'', group:'full', groupLabel:'全身' }
 };
 
 window.MUSCLE_GROUPS = [
@@ -35,7 +39,8 @@ window.MUSCLE_GROUPS = [
   { value:'back', label:'背中' },
   { value:'shoulder', label:'肩' },
   { value:'legs', label:'脚' },
-  { value:'arms', label:'腕' }
+  { value:'arms', label:'腕' },
+  { value:'full', label:'全身' }
 ];
 
 window.DEFAULT_PROFILE = {

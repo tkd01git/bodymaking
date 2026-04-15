@@ -17,6 +17,7 @@ window.EXERCISES = {
   'ワンハンドローイング': { target:['upperBack','latBackL','latBackR'], muscles:['広背筋','大円筋','僧帽筋中部'], lastDate:'', group:'back', groupLabel:'背中' },
 
   'デッドリフト': { target:['hamL','hamR','gluteL','gluteR','upperBack','latBackL','latBackR'], muscles:['ハムストリングス','大臀筋','広背筋','僧帽筋'], lastDate:'', group:'legs', groupLabel:'脚' },
+  'ルーマニアンデッドリフト': { target:['hamL','hamR','gluteL','gluteR'], muscles:['ハムストリングス','大臀筋','脊柱起立筋'], lastDate:'', group:'legs', groupLabel:'脚' },
   'スクワット': { target:['quadFrontL','quadFrontR','gluteL','gluteR'], muscles:['大腿四頭筋','大臀筋'], lastDate:'', group:'legs', groupLabel:'脚' },
   'フロントスクワット': { target:['quadFrontL','quadFrontR'], muscles:['大腿四頭筋','体幹'], lastDate:'', group:'legs', groupLabel:'脚' },
   'ランジ': { target:['quadFrontL','quadFrontR','gluteL','gluteR'], muscles:['大腿四頭筋','大臀筋','ハムストリングス'], lastDate:'', group:'legs', groupLabel:'脚' },

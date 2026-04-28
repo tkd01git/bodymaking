@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LiftFlow</title>
-  <link rel="stylesheet" href="./css/styles.css?v=20260410-1" />
+  <link rel="stylesheet" href="./css/styles.css?v=20260411-1" />
 </head>
 <body>
   <div class="wrap">
@@ -31,16 +31,20 @@
       </div>
     </div>
 
-    <div class="tabs">
+    <!-- Main Tabs -->
+    <div class="tabs tabs-main tabs-3">
       <button class="tab active" data-main-tab="training">Training</button>
       <button class="tab" data-main-tab="recovery">Recovery</button>
+      <button class="tab" data-main-tab="tips">Tips</button>
     </div>
 
+    <!-- Training Sub Tabs -->
     <div id="trainingSubTabs" class="tabs">
       <button class="tab active" data-training-subtab="workout">Workout</button>
       <button class="tab" data-training-subtab="archive">Archive</button>
     </div>
 
+    <!-- Recovery Sub Tabs -->
     <div id="recoverySubTabs" class="tabs hidden">
       <button class="tab active" data-recovery-subtab="sleeping">Sleeping</button>
       <button class="tab" data-recovery-subtab="archive">Archive</button>
@@ -360,6 +364,14 @@
         </div>
       </div>
     </div>
+
+    <!-- TIPS -->
+    <div id="tipsRoot" class="hidden">
+      <div class="card stack">
+        <div class="section-title">Tips</div>
+        <div id="tipsList" class="tips-list"></div>
+      </div>
+    </div>
   </div>
 
   <div id="setupModal" class="hidden">
@@ -389,11 +401,11 @@
     </div>
   </div>
 
-  <script src="./js/constants.js?v=20260410-1"></script>
-  <script src="./js/sampleData.js?v=20260410-1"></script>
-  <script src="./js/helpers.js?v=20260410-1"></script>
-  <script src="./js/drive.js?v=20260410-1"></script>
-  <script src="./js/ai.js?v=20260410-1"></script>
-  <script src="./js/app.js?v=20260410-1"></script>
+  <script src="./js/constants.js?v=20260411-1"></script>
+  <script src="./js/sampleData.js?v=20260411-1"></script>
+  <script src="./js/helpers.js?v=20260411-1"></script>
+  <script src="./js/drive.js?v=20260411-1"></script>
+  <script src="./js/ai.js?v=20260411-1"></script>
+  <script src="./js/app.js?v=20260411-1"></script>
 </body>
 </html>

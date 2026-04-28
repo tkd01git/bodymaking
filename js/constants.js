@@ -97,5 +97,29 @@ window.TIPS_DATA = [
     source: 'Rhea, M. R., Landers, D. M., Alvar, B. A., & Arent, S. M. (2003). The effects of competition and the presence of an audience on weight lifting performance. Journal of Strength and Conditioning Research, 17(2), 303–306.',
     method: 'レクリエーションレベルで筋力トレーニング経験のある男女32名を対象に、1RMベンチプレスを3条件で測定した。条件は、他者が同時に実施するcoaction条件、競争相手がいるcompetitive coaction条件、観客の前で実施するaudience条件であった。各条件後には覚醒状態を測定する質問紙も実施された。',
     result: '1RMベンチプレスは、coaction条件で93±43kg、competitive coaction条件で103±46kg、audience条件で105±48kgだった。coaction条件と比べて、競争条件および観客条件では有意に高い挙上重量を示した。観客条件はcoaction条件より約12.9%高く、観客や競争の存在が最大筋力発揮を高める可能性が示された。'
-  }
+  },
+  {
+  category: 'メンタル',
+  title: '支援者想起で主観的負荷が軽減される',
+  claim: '支援者を想起すると、課題中の主観的負荷が軽くなり、出力維持や課題遂行が改善することがある。',
+  source: 'Psychophysiology 掲載研究 ほか',
+  method: '親しい支援者の写真を見る条件と、そうでない人物写真を見る条件で、筋出力や課題持続、主観的負荷などを比較した。',
+  result: '支援者の手がかりがある条件で、パフォーマンス向上や主観的負荷低下の傾向が見られた。効果は特に関係性の強い相手で出やすかった。'
+},
+{
+  category: 'メンタル',
+  title: 'psyching-upは短距離パフォーマンスを高めることがある',
+  claim: 'スタート前の psyching-up や覚醒操作は、短距離走パフォーマンスを高めることがある。ただし個人差が大きい。',
+  source: 'Hammoudi-Nassib らの研究、Yerkes–Dodson law',
+  method: 'imagery や覚醒水準を高める操作を行った条件と通常条件で、30mスプリントなどのパフォーマンスを比較した。',
+  result: '覚醒操作によって短距離パフォーマンス改善が見られた。一方で、覚醒が高すぎる選手では逆効果になる可能性も示唆された。'
+},
+{
+  category: '回復',
+  title: '睡眠4時間では無酸素パワーが低下しやすい',
+  claim: '短時間睡眠、特に4時間程度の睡眠制限は、反応時間や無酸素パワーを低下させやすい。',
+  source: '2024年 RCT（Sanda競技者）ほか',
+  method: '通常睡眠条件と4時間睡眠条件を比較し、Wingateテスト、反応時間、ジャンプなどの指標を測定した。',
+  result: '4時間睡眠条件では、反応時間が悪化し、Wingate の最大パワー・平均パワーが低下した。単発ジャンプでは影響が小さい一方、代謝依存の高い課題で影響が出やすかった。'
+}
 ];

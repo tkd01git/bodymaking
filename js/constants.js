@@ -69,3 +69,31 @@ window.DRIVE_ENDPOINTS = {
 };
 
 window.USE_SAMPLE_DATA = false;
+
+/*
+  Tips はこの配列だけ編集すれば増やせます。
+  title: 見出し
+  claim: 主張
+  source: 論文名・著者・年など
+  method: 実験内容
+  result: 結果
+  category: 任意の分類名
+*/
+window.TIPS_DATA = [
+  {
+    category: '筋力トレーニング',
+    title: 'ウエイト直後にスプリントを入れる意義',
+    claim: '筋力トレーニング直後にスプリント動作を入れることで、得た出力を競技動作へ結びつけやすい可能性がある。',
+    source: 'ここに論文情報を記入',
+    method: 'ここに実験デザインを記入',
+    result: 'ここに主要結果を記入'
+  },
+  {
+    category: 'パフォーマンス',
+    title: '観客や他者の存在と出力向上',
+    claim: '観客や他者の存在によって、筋力発揮やパワー発揮が高まることがある。',
+    source: 'ここに論文情報を記入',
+    method: 'ここに実験デザインを記入',
+    result: 'ここに主要結果を記入'
+  }
+];

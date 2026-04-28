@@ -356,8 +356,8 @@ function getLastPerformedDate(exerciseName) {
 
 function getMetricOptions() {
   return [
-    { value:'total', label:'全種目総重量' },
-    ...Object.keys(window.EXERCISES).map(name => ({ value:name, label:name }))
+    { value: 'total', label: '全種目総重量' },
+    ...Object.keys(window.EXERCISES).map(name => ({ value: name, label: name }))
   ];
 }
 
@@ -942,21 +942,30 @@ function renderSleepArchiveCharts() {
 function renderTips() {
   if (!el.tipsList) return;
 
-  const tips = Array.isArray(window.TIPS_DATA) ? window.TIPS_DATA : [];
+  const rawTips = window.TIPS_DATA;
+  const tips = Array.isArray(rawTips) ? rawTips : [];
+
   if (!tips.length) {
-    el.tipsList.innerHTML = '<div class="sub">Tips はまだありません。constants.js の window.TIPS_DATA を編集してください。</div>';
+    el.tipsList.innerHTML = `
+      <div class="tip-card">
+        <div class="tip-title">Tips が読み込まれていません</div>
+        <div class="tip-claim">
+          js/constants.js の <code>window.TIPS_DATA</code> を確認してください。
+        </div>
+      </div>
+    `;
     return;
   }
 
-  el.tipsList.innerHTML = tips.map(tip => `
+  el.tipsList.innerHTML = tips.map((tip, index) => `
     <div class="tip-card">
-      <div class="tip-category">${tip.category || '未分類'}</div>
-      <div class="tip-title">${tip.title || ''}</div>
-      <div class="tip-claim">${tip.claim || ''}</div>
-      <div class="tip-source">${tip.source || ''}</div>
+      <div class="tip-category">${tip.category || `未分類 ${index + 1}`}</div>
+      <div class="tip-title">${tip.title || 'タイトル未設定'}</div>
+      <div class="tip-claim">${tip.claim || '主張未設定'}</div>
+      <div class="tip-source">${tip.source || '出典未設定'}</div>
       <div class="tip-body">
-        <div><strong>実験:</strong> ${tip.method || ''}</div>
-        <div><strong>結果:</strong> ${tip.result || ''}</div>
+        <div><strong>実験:</strong> ${tip.method || '未設定'}</div>
+        <div><strong>結果:</strong> ${tip.result || '未設定'}</div>
       </div>
     </div>
   `).join('');
@@ -1289,6 +1298,10 @@ document.querySelectorAll('[data-main-tab]').forEach(tab => {
   tab.addEventListener('click', () => {
     state.mainTab = tab.dataset.mainTab;
     renderMainTabs();
+
+    if (state.mainTab === 'tips') {
+      renderTips();
+    }
   });
 });
 
@@ -1369,10 +1382,12 @@ el.toggleRecordHistoryBtn.addEventListener('click', () => {
   renderRecordHistoryToggle();
 });
 
-el.toggleSleepHistoryBtn.addEventListener('click', () => {
-  state.isSleepHistoryOpen = !state.isSleepHistoryOpen;
-  renderSleepHistoryToggle();
-});
+if (el.toggleSleepHistoryBtn) {
+  el.toggleSleepHistoryBtn.addEventListener('click', () => {
+    state.isSleepHistoryOpen = !state.isSleepHistoryOpen;
+    renderSleepHistoryToggle();
+  });
+}
 
 el.muscleGroupSelect.addEventListener('change', async e => {
   await primeAudio();

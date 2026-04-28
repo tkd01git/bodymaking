@@ -27,6 +27,7 @@ const state = {
   },
 
   isRecordHistoryOpen: false,
+  isSleepHistoryOpen: false,
 
   profile: JSON.parse(localStorage.getItem('liftflow-profile') || 'null') || structuredClone(window.DEFAULT_PROFILE),
   setRecords: { ...(window.USE_SAMPLE_DATA ? window.sampleSetRecords : {}), ...JSON.parse(localStorage.getItem('liftflow-set-records') || '{}') },
@@ -48,6 +49,7 @@ const el = {
   trainingArchiveRoot: document.getElementById('trainingArchiveRoot'),
   sleepingRoot: document.getElementById('sleepingRoot'),
   recoveryArchiveRoot: document.getElementById('recoveryArchiveRoot'),
+  tipsRoot: document.getElementById('tipsRoot'),
 
   muscleGroupSelect: document.getElementById('muscleGroupSelect'),
   exerciseSelect: document.getElementById('exerciseSelect'),
@@ -100,6 +102,8 @@ const el = {
   sleepAiText: document.getElementById('sleepAiText'),
   morningMemo: document.getElementById('morningMemo'),
   sleepRecentList: document.getElementById('sleepRecentList'),
+  toggleSleepHistoryBtn: document.getElementById('toggleSleepHistoryBtn'),
+  sleepHistoryPanel: document.getElementById('sleepHistoryPanel'),
 
   sleepCalendarGrid: document.getElementById('sleepCalendarGrid'),
   sleepCalendarMonthLabel: document.getElementById('sleepCalendarMonthLabel'),
@@ -116,6 +120,8 @@ const el = {
   archiveSleepDeleteBtn: document.getElementById('archiveSleepDeleteBtn'),
   sleepDurationCanvas: document.getElementById('sleepDurationCanvas'),
   sleepTimingCanvas: document.getElementById('sleepTimingCanvas'),
+
+  tipsList: document.getElementById('tipsList'),
 
   openSetupBtn: document.getElementById('openSetupBtn'),
   driveSyncBtn: document.getElementById('driveSyncBtn'),
@@ -158,6 +164,23 @@ function saveProfileLocal(profile) {
 function getDateStringFromIso(iso) {
   const dt = new Date(iso);
   return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+}
+
+function calcDurationMinutes(sleepAt, wakeAt) {
+  const s = new Date(sleepAt).getTime();
+  const w = new Date(wakeAt).getTime();
+  return Math.max(0, Math.round((w - s) / 60000));
+}
+
+function buildSleepRecord({ id, sleepAt, wakeAt, source }) {
+  return {
+    id: id || `sleep_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    sleepAt,
+    wakeAt,
+    durationMinutes: wakeAt ? calcDurationMinutes(sleepAt, wakeAt) : null,
+    wakeDate: wakeAt ? getDateStringFromIso(wakeAt) : null,
+    source: source || 'manual'
+  };
 }
 
 function normalizeSleepRecords(records) {
@@ -210,23 +233,6 @@ function mergeSleepRecords(localRecords = [], driveRecords = []) {
     const bTime = new Date(b.wakeAt || b.sleepAt || 0).getTime();
     return aTime - bTime;
   });
-}
-
-function calcDurationMinutes(sleepAt, wakeAt) {
-  const s = new Date(sleepAt).getTime();
-  const w = new Date(wakeAt).getTime();
-  return Math.max(0, Math.round((w - s) / 60000));
-}
-
-function buildSleepRecord({ id, sleepAt, wakeAt, source }) {
-  return {
-    id: id || `sleep_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-    sleepAt,
-    wakeAt,
-    durationMinutes: wakeAt ? calcDurationMinutes(sleepAt, wakeAt) : null,
-    wakeDate: wakeAt ? getDateStringFromIso(wakeAt) : null,
-    source: source || 'manual'
-  };
 }
 
 async function loadDriveDataOnStartup() {
@@ -350,8 +356,8 @@ function getLastPerformedDate(exerciseName) {
 
 function getMetricOptions() {
   return [
-    { value: 'total', label: '全種目総重量' },
-    ...Object.keys(window.EXERCISES).map(name => ({ value: name, label: name }))
+    { value:'total', label:'全種目総重量' },
+    ...Object.keys(window.EXERCISES).map(name => ({ value:name, label:name }))
   ];
 }
 
@@ -537,6 +543,11 @@ function renderBodyMap() {
 function renderRecordHistoryToggle() {
   el.recordHistoryPanel.classList.toggle('hidden', !state.isRecordHistoryOpen);
   el.toggleRecordHistoryBtn.textContent = state.isRecordHistoryOpen ? 'Hide Set History' : 'Show Set History';
+}
+
+function renderSleepHistoryToggle() {
+  el.sleepHistoryPanel.classList.toggle('hidden', !state.isSleepHistoryOpen);
+  el.toggleSleepHistoryBtn.textContent = state.isSleepHistoryOpen ? 'Hide Sleep History' : 'Show Sleep History';
 }
 
 function formatRecordTimestamp(record) {
@@ -754,6 +765,7 @@ function renderSleepRecentList() {
 
   if (!records.length) {
     el.sleepRecentList.innerHTML = '<div class="sub">まだ睡眠記録がありません。</div>';
+    renderSleepHistoryToggle();
     return;
   }
 
@@ -826,6 +838,8 @@ function renderSleepRecentList() {
       await saveSleepEveryTime();
     });
   });
+
+  renderSleepHistoryToggle();
 }
 
 function renderSleepArchiveCalendar() {
@@ -925,6 +939,29 @@ function renderSleepArchiveCharts() {
   drawSleepTimingChart(el.sleepTimingCanvas, sleepSeries, wakeSeries);
 }
 
+function renderTips() {
+  if (!el.tipsList) return;
+
+  const tips = Array.isArray(window.TIPS_DATA) ? window.TIPS_DATA : [];
+  if (!tips.length) {
+    el.tipsList.innerHTML = '<div class="sub">Tips はまだありません。constants.js の window.TIPS_DATA を編集してください。</div>';
+    return;
+  }
+
+  el.tipsList.innerHTML = tips.map(tip => `
+    <div class="tip-card">
+      <div class="tip-category">${tip.category || '未分類'}</div>
+      <div class="tip-title">${tip.title || ''}</div>
+      <div class="tip-claim">${tip.claim || ''}</div>
+      <div class="tip-source">${tip.source || ''}</div>
+      <div class="tip-body">
+        <div><strong>実験:</strong> ${tip.method || ''}</div>
+        <div><strong>結果:</strong> ${tip.result || ''}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
 function renderMainTabs() {
   document.querySelectorAll('[data-main-tab]').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.mainTab === state.mainTab);
@@ -937,18 +974,22 @@ function renderMainTabs() {
   el.trainingArchiveRoot.classList.add('hidden');
   el.sleepingRoot.classList.add('hidden');
   el.recoveryArchiveRoot.classList.add('hidden');
+  el.tipsRoot.classList.add('hidden');
 
   if (state.mainTab === 'training') {
     if (state.trainingSubTab === 'workout') el.workoutRoot.classList.remove('hidden');
     if (state.trainingSubTab === 'archive') el.trainingArchiveRoot.classList.remove('hidden');
-  } else {
+  } else if (state.mainTab === 'recovery') {
     if (state.recoverySubTab === 'sleeping') el.sleepingRoot.classList.remove('hidden');
     if (state.recoverySubTab === 'archive') el.recoveryArchiveRoot.classList.remove('hidden');
+  } else if (state.mainTab === 'tips') {
+    el.tipsRoot.classList.remove('hidden');
   }
 
   document.querySelectorAll('[data-training-subtab]').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.trainingSubtab === state.trainingSubTab);
   });
+
   document.querySelectorAll('[data-recovery-subtab]').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.recoverySubtab === state.recoverySubTab);
   });
@@ -1220,6 +1261,7 @@ function initSelectors() {
   populateMetricSelect(el.historyMetricSelect, state.selectedHistoryMetric);
   el.morningMemo.value = state.morningMemo;
   renderRecordHistoryToggle();
+  renderSleepHistoryToggle();
 }
 
 async function initializeApp() {
@@ -1236,6 +1278,7 @@ async function initializeApp() {
   renderSleepArchiveCalendar();
   renderSleepArchiveDetail();
   renderSleepArchiveCharts();
+  renderTips();
 
   if (!state.profile || (!state.profile.height && !localStorage.getItem('liftflow-profile'))) {
     openSetupModal();
@@ -1324,6 +1367,11 @@ el.nextChartBtn.addEventListener('click', () => {
 el.toggleRecordHistoryBtn.addEventListener('click', () => {
   state.isRecordHistoryOpen = !state.isRecordHistoryOpen;
   renderRecordHistoryToggle();
+});
+
+el.toggleSleepHistoryBtn.addEventListener('click', () => {
+  state.isSleepHistoryOpen = !state.isSleepHistoryOpen;
+  renderSleepHistoryToggle();
 });
 
 el.muscleGroupSelect.addEventListener('change', async e => {

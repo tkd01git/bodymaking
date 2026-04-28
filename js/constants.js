@@ -79,35 +79,23 @@ window.USE_SAMPLE_DATA = false;
   result: 結果
   category: 任意の分類名
 */
+window.USE_SAMPLE_DATA = false;
+
 window.TIPS_DATA = [
   {
-
     category: '筋力トレーニング',
-  
     title: 'ウエイトトレーニングとスプリントの関係',
-  
     claim: '筋力トレーニング直後にスプリント動作を入れることで、スプリント機能が短期的に向上する',
-  
     source: 'Chatzopoulos et al., 2007',
-  
     method: '競技経験のある男性を対象に、重いレジスタンス運動を行わせ、その前後で10m・30mスプリントを測定した。スプリント測定は、重いレジスタンス運動の3分前、3分後、5分後に実施された。',
-  
     result: '3分後のスプリント能力には有意な改善は見られなかったが、5分後には10m・30mの両方でスプリントパフォーマンスが有意に向上した。したがって、重い筋力運動は、適切な休息時間を挟むことで短距離スプリント能力を一時的に高める可能性が示された。'
-
   },
   {
-
-  category: 'パフォーマンス',
-
-  title: '観客や他者の存在と出力向上',
-
-  claim: '観客や他者の存在によって、筋力発揮やパワー発揮が高まることがある。',
-
-  source: 'Rhea, M. R., Landers, D. M., Alvar, B. A., & Arent, S. M. (2003). The effects of competition and the presence of an audience on weight lifting performance. Journal of Strength and Conditioning Research, 17(2), 303–306.',
-
-  method: 'レクリエーションレベルで筋力トレーニング経験のある男女32名を対象に、1RMベンチプレスを3条件で測定した。条件は、他者が同時に実施するcoaction条件、競争相手がいるcompetitive coaction条件、観客の前で実施するaudience条件であった。各条件後には覚醒状態を測定する質問紙も実施された。',
-
-  result: '1RMベンチプレスは、coaction条件で93±43kg、competitive coaction条件で103±46kg、audience条件で105±48kgだった。coaction条件と比べて、競争条件および観客条件では有意に高い挙上重量を示した。観客条件はcoaction条件より約12.9%高く、観客や競争の存在が最大筋力発揮を高める可能性が示された。'
-
+    category: 'パフォーマンス',
+    title: '観客や他者の存在と出力向上',
+    claim: '観客や他者の存在によって、筋力発揮やパワー発揮が高まることがある。',
+    source: 'Rhea, M. R., Landers, D. M., Alvar, B. A., & Arent, S. M. (2003). The effects of competition and the presence of an audience on weight lifting performance. Journal of Strength and Conditioning Research, 17(2), 303–306.',
+    method: 'レクリエーションレベルで筋力トレーニング経験のある男女32名を対象に、1RMベンチプレスを3条件で測定した。条件は、他者が同時に実施するcoaction条件、競争相手がいるcompetitive coaction条件、観客の前で実施するaudience条件であった。各条件後には覚醒状態を測定する質問紙も実施された。',
+    result: '1RMベンチプレスは、coaction条件で93±43kg、competitive coaction条件で103±46kg、audience条件で105±48kgだった。coaction条件と比べて、競争条件および観客条件では有意に高い挙上重量を示した。観客条件はcoaction条件より約12.9%高く、観客や競争の存在が最大筋力発揮を高める可能性が示された。'
   }
 ];

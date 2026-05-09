@@ -614,30 +614,40 @@ canvas {
 }
 
 
-/* Main tab horizontal scroll: Routine 霑ｽ蜉�逕ｨ */
+/* Main tabs: 4鬆�岼繧�1逕ｻ髱｢蜀�↓蝮�ｭ芽｡ｨ遉ｺ */
 .tabs-main.tabs-scroll {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 6px;
-  scrollbar-width: none;
-}
-
-.tabs-main.tabs-scroll::-webkit-scrollbar {
-  display: none;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+  overflow: visible;
+  padding-bottom: 0;
 }
 
 .tabs-main.tabs-scroll .tab {
-  flex: 0 0 auto;
-  min-width: 112px;
+  width: 100%;
+  min-width: 0;
+  padding: 9px 4px;
+  text-align: center;
+  font-size: clamp(11px, 2.6vw, 13px);
+  letter-spacing: -0.02em;
 }
 
 .drive-logo-svg {
-  width: 22px;
-  height: 20px;
+  width: 23px;
+  height: 23px;
   display: block;
 }
+
+.drive-line {
+  fill: none;
+  stroke-width: 2.3;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.drive-line-green { stroke: #0f9d58; }
+.drive-line-yellow { stroke: #f4b400; }
+.drive-line-blue { stroke: #4285f4; }
 
 /* Routine: 陦悟虚縺�縺代ｒ蜈医↓隕九○縲∵�ｹ諡�縺ｯ蠢�ｦ∵凾縺ｫ髢九￥ */
 .routine-list {
@@ -675,7 +685,7 @@ canvas {
 
 .routine-head {
   display: grid;
-  grid-template-columns: 72px 1fr;
+  grid-template-columns: 76px 1fr;
   gap: 10px;
   align-items: start;
 }
@@ -704,6 +714,7 @@ canvas {
   font-size: 15px;
   font-weight: 900;
   margin-bottom: 5px;
+  letter-spacing: -0.02em;
 }
 
 .routine-action {
@@ -712,16 +723,37 @@ canvas {
   line-height: 1.55;
 }
 
+.routine-action ul {
+  margin: 0;
+  padding-left: 1.15em;
+}
+
+.routine-action li {
+  margin: 2px 0;
+}
+
 .routine-detail-toggle {
   margin-top: 10px;
-  width: 100%;
-  border-radius: 12px;
-  border: 1px solid rgba(212, 175, 55, 0.26);
-  background: rgba(212, 175, 55, 0.06);
+  border-radius: 999px;
+  border: 1px solid rgba(212, 175, 55, 0.24);
+  background: rgba(212, 175, 55, 0.04);
   color: #f0d98a;
-  padding: 9px 10px;
+  padding: 7px 12px;
   font-size: 12px;
   font-weight: 900;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+}
+
+.routine-detail-toggle::after {
+  content: '窶ｺ';
+  display: inline-block;
+  margin-left: 6px;
+  transition: transform 0.18s ease;
+}
+
+.routine-detail-toggle.open::after {
+  transform: rotate(90deg);
 }
 
 .routine-evidence {

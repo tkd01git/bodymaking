@@ -990,6 +990,12 @@ function renderRoutine() {
   if (!el.routineList) return;
 
   const items = Array.isArray(window.ROUTINE_DATA) ? window.ROUTINE_DATA : [];
+  const renderAction = action => {
+    if (Array.isArray(action)) {
+      return `<ul>${action.map(line => `<li>${line}</li>`).join('')}</ul>`;
+    }
+    return action || '-';
+  };
 
   if (!items.length) {
     el.routineList.innerHTML = `
@@ -1014,25 +1020,25 @@ function renderRoutine() {
             <div class="routine-time">${item.time || '-'}</div>
             <div class="routine-main">
               <div class="routine-title">${item.title || item.phase || '実行項目'}</div>
-              <div class="routine-action">${item.action || '-'}</div>
+              <div class="routine-action">${renderAction(item.action)}</div>
             </div>
           </div>
-          <button class="routine-detail-toggle" type="button" data-routine-toggle="${index}">根拠を表示</button>
+          <button class="routine-detail-toggle" type="button" data-routine-toggle="${index}">Show more</button>
           <div class="routine-evidence hidden" id="routine-evidence-${index}">
             <div class="routine-evidence-item">
-              <div class="routine-evidence-label">根拠主張</div>
+              <div class="routine-evidence-label">Claim</div>
               <div class="routine-evidence-text">${item.claim || '-'}</div>
             </div>
             <div class="routine-evidence-item">
-              <div class="routine-evidence-label">実験・レビュー内容</div>
+              <div class="routine-evidence-label">Study / Review</div>
               <div class="routine-evidence-text">${item.method || '-'}</div>
             </div>
             <div class="routine-evidence-item">
-              <div class="routine-evidence-label">結果</div>
+              <div class="routine-evidence-label">Result</div>
               <div class="routine-evidence-text">${item.result || '-'}</div>
             </div>
             <div class="routine-evidence-item">
-              <div class="routine-evidence-label">文献</div>
+              <div class="routine-evidence-label">Source</div>
               <div class="routine-evidence-text">${item.source || '-'}</div>
             </div>
           </div>
@@ -1047,7 +1053,8 @@ function renderRoutine() {
       if (!panel) return;
       const shouldOpen = panel.classList.contains('hidden');
       panel.classList.toggle('hidden', !shouldOpen);
-      btn.textContent = shouldOpen ? '根拠を閉じる' : '根拠を表示';
+      btn.classList.toggle('open', shouldOpen);
+      btn.textContent = shouldOpen ? 'Show less' : 'Show more';
     });
   });
 }
@@ -1514,7 +1521,7 @@ el.addSetBtn.addEventListener('click', addSetRecord);
 
 el.sleepStartBtn.addEventListener('click', handleSleepStart);
 el.sleepWakeBtn.addEventListener('click', handleSleepWake);
-el.manualSleepSaveBtn.addEventListener('click', handleManualSleepSave);
+if (el.manualSleepSaveBtn) el.manualSleepSaveBtn.addEventListener('click', handleManualSleepSave);
 el.sleepAiCommentBtn.addEventListener('click', fetchSleepingAiComment);
 
 el.morningMemo.addEventListener('input', () => {

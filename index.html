@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -222,69 +223,87 @@
             <div class="summary-value" id="summaryVolume">-</div>
           </div>
           <div class="summary-box">
-            <div class="summary-label">種目数</div>
-            <div class="summary-value" id="summaryExercises">-</div>
+            <div class="summary-label">平均重量</div>
+            <div class="summary-value" id="summaryAvgWeight">-</div>
+          </div>
+          <div class="summary-box">
+            <div class="summary-label">総回数</div>
+            <div class="summary-value" id="summaryReps">-</div>
           </div>
           <div class="summary-box">
             <div class="summary-label">セット数</div>
             <div class="summary-value" id="summarySets">-</div>
           </div>
         </div>
+      </div>
 
-        <div class="chart-box">
-          <div class="chart-title" id="historyChartTitle">Training Volume</div>
-          <canvas id="historyChartCanvas" width="380" height="220"></canvas>
+      <div class="card stack">
+        <div class="calendar-header">
+          <div class="section-title">Trend</div>
+          <div class="calendar-nav">
+            <button id="prevChartBtn" class="mini-btn" type="button">‹</button>
+            <button id="nextChartBtn" class="mini-btn" type="button">›</button>
+          </div>
         </div>
-
-        <div class="record-list" id="historyRecords"></div>
+        <div class="chart-box">
+          <div class="chart-title" id="historyTrendTitle">Selected Exercise</div>
+          <canvas id="historyComboCanvas" width="380" height="220"></canvas>
+        </div>
       </div>
     </div>
 
     <!-- RECOVERY > SLEEPING -->
     <div id="sleepingRoot" class="hidden">
       <div class="card stack">
-        <div class="section-title">Sleep Entry</div>
-        <div class="record-grid compact-record-grid">
-          <input type="time" id="sleepStartTime" class="time-input" />
-          <input type="time" id="sleepEndTime" class="time-input" />
-          <button class="primary" id="addSleepBtn">Confirm</button>
+        <div class="section-title">Timestamp</div>
+        <div class="inline">
+          <button id="sleepStartBtn" class="primary">入眠</button>
+          <button id="sleepWakeBtn" class="mini-btn">起床</button>
         </div>
+        <div class="sub" id="sleepStatusText">未記録</div>
       </div>
 
       <div class="card stack">
-        <div class="section-title">Today</div>
-        <div class="suggestion">
-          <div class="goal-grid">
-            <div class="goal-box">
-              <div class="goal-label">Sleep Duration</div>
-              <div class="goal-value" id="todaySleepDuration">-</div>
-            </div>
-            <div class="goal-box">
-              <div class="goal-label">Recovery Score</div>
-              <div class="goal-value" id="todayRecoveryScore">-</div>
-            </div>
-          </div>
-
-          <button id="recoveryAiCommentBtn" class="mini-btn ai-action-btn" type="button">AIコメント</button>
-          <div class="ai-box" id="recoveryAiText"></div>
+        <div class="section-title">Manual Entry</div>
+        <div>
+          <label>入眠日時</label>
+          <input type="datetime-local" id="manualSleepAt" />
         </div>
+        <div>
+          <label>起床日時</label>
+          <input type="datetime-local" id="manualWakeAt" />
+        </div>
+        <button id="manualSleepSaveBtn" class="primary">Save Sleep Record</button>
       </div>
 
       <div class="card stack">
-        <div class="section-title">Sleep Trend</div>
-        <div class="chart-box">
-          <div class="chart-title">Sleep Duration</div>
-          <canvas id="sleepTrendCanvas" width="380" height="220"></canvas>
+        <div class="section-title">AI Comment</div>
+        <button id="sleepAiCommentBtn" class="mini-btn ai-action-btn" type="button">AIコメント</button>
+        <div class="ai-box" id="sleepAiText"></div>
+      </div>
+
+      <div class="card stack">
+        <div class="section-title">Morning Memo</div>
+        <textarea id="morningMemo" rows="6" placeholder="朝やることや気づきを自由に書いてください。"></textarea>
+      </div>
+
+      <div class="card stack">
+        <div class="section-title">Recent Sleep Records</div>
+        <div class="record-history-toggle-wrap">
+          <button id="toggleSleepHistoryBtn" class="mini-btn record-history-toggle" type="button">Show Sleep History</button>
+        </div>
+        <div id="sleepHistoryPanel" class="record-history-panel hidden">
+          <div class="record-list" id="sleepRecentList"></div>
         </div>
       </div>
     </div>
 
     <!-- RECOVERY > ARCHIVE -->
-    <div id="sleepingArchiveRoot" class="hidden">
+    <div id="recoveryArchiveRoot" class="hidden">
       <div class="card stack">
         <div class="calendar-header">
           <div>
-            <div class="section-title">Sleep Calendar</div>
+            <div class="section-title">Sleeping Calendar</div>
             <div class="sub" id="sleepCalendarMonthLabel"></div>
           </div>
 
@@ -297,8 +316,54 @@
       </div>
 
       <div class="card stack">
-        <div class="section-title">Sleep Records</div>
-        <div class="record-list" id="sleepHistoryRecords"></div>
+        <div class="section-title">Sleep Detail</div>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-label">入眠</div>
+            <div class="detail-value" id="sleepDetailSleepAt">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">起床</div>
+            <div class="detail-value" id="sleepDetailWakeAt">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">睡眠時間</div>
+            <div class="detail-value" id="sleepDetailDuration">-</div>
+          </div>
+        </div>
+
+        <button id="sleepArchiveEditToggleBtn" class="mini-btn" type="button">Edit</button>
+
+        <div id="sleepArchiveEditPanel" class="hidden">
+          <div>
+            <label>入眠日時</label>
+            <input type="datetime-local" id="archiveEditSleepAt" />
+          </div>
+          <div>
+            <label>起床日時</label>
+            <input type="datetime-local" id="archiveEditWakeAt" />
+          </div>
+          <div class="inline">
+            <button id="archiveSleepSaveBtn" class="primary">Save</button>
+            <button id="archiveSleepDeleteBtn" class="mini-btn" type="button">Delete</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card stack">
+        <div class="section-title">Sleep Duration Trend</div>
+        <div class="chart-box">
+          <div class="chart-title">Past 5 Days</div>
+          <canvas id="sleepDurationCanvas" width="380" height="220"></canvas>
+        </div>
+      </div>
+
+      <div class="card stack">
+        <div class="section-title">Sleep / Wake Trend</div>
+        <div class="chart-box">
+          <div class="chart-title">Past 5 Days</div>
+          <canvas id="sleepTimingCanvas" width="380" height="220"></canvas>
+        </div>
       </div>
     </div>
 
@@ -313,66 +378,43 @@
     <!-- ROUTINE -->
     <div id="routineRoot" class="hidden">
       <div class="card stack">
-        <div class="section-title">Race Routine</div>
-        <div class="sub">
-          100m・200mの試合当日に最大出力を出すための、試合3日前からレース後までの実行メニュー。
-        </div>
+        <div class="section-title">Sprint Race Routine</div>
+        <div class="routine-lead">100m・200mで当日の最大出力を優先するため、効果の根拠が比較的強い行動だけを時系列で表示しています。</div>
         <div id="routineList" class="routine-list"></div>
       </div>
     </div>
+  </div>
 
-    <!-- SETUP MODAL -->
-    <div id="setupModal" class="modal hidden" role="dialog" aria-modal="true">
-      <div class="modal-card">
-        <div class="modal-header">
-          <div>
-            <div class="section-title">Initial Setup</div>
-            <div class="sub">Profile and training goal</div>
-          </div>
-          <button id="closeSetupBtn" class="mini-btn" type="button">×</button>
+  <div id="setupModal" class="hidden">
+    <div class="setup-backdrop"></div>
+    <div class="setup-panel">
+      <h3>Initial Setup</h3>
+      <div class="setup-grid">
+        <div><label>Height (cm)</label><input id="profileHeight" type="number" /></div>
+        <div><label>Weight (kg)</label><input id="profileWeight" type="number" /></div>
+        <div>
+          <label>Goal</label>
+          <select id="profileGoal">
+            <option value="hypertrophy">筋肥大</option>
+            <option value="strength">筋力向上</option>
+            <option value="cut">減量</option>
+          </select>
         </div>
-
-        <div class="stack">
-          <div>
-            <label>Height</label>
-            <input id="profileHeight" type="number" placeholder="cm" />
-          </div>
-
-          <div>
-            <label>Weight</label>
-            <input id="profileWeight" type="number" placeholder="kg" />
-          </div>
-
-          <div>
-            <label>Goal</label>
-            <select id="profileGoal" class="selection-accent">
-              <option value="hypertrophy">Hypertrophy</option>
-              <option value="strength">Strength</option>
-              <option value="power">Power</option>
-              <option value="sprint">Sprint</option>
-            </select>
-          </div>
-
-          <div>
-            <label>Weekly Frequency</label>
-            <input id="profileFrequency" type="number" min="1" max="7" />
-          </div>
-
-          <div class="record-grid compact-record-grid">
-            <input id="pbBenchPress" type="number" placeholder="Bench Press PB" />
-            <input id="pbSquat" type="number" placeholder="Squat PB" />
-            <input id="pbDeadlift" type="number" placeholder="Deadlift PB" />
-          </div>
-
-          <button id="saveSetupBtn" class="primary" type="button">Save</button>
-        </div>
+        <div><label>Training Frequency / week</label><input id="profileFrequency" type="number" min="1" max="7" /></div>
+        <div><label>Bench Press PB (kg)</label><input id="pbBench" type="number" /></div>
+        <div><label>Squat PB (kg)</label><input id="pbSquat" type="number" /></div>
+        <div><label>Deadlift PB (kg)</label><input id="pbDeadlift" type="number" /></div>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:12px;">
+        <button id="saveProfileBtn">Save</button>
+        <button id="closeSetupBtn">Close</button>
       </div>
     </div>
   </div>
 
   <script src="./js/constants.js?v=20260428-1"></script>
-  <script src="./js/helpers.js?v=20260428-1"></script>
   <script src="./js/sampleData.js?v=20260428-1"></script>
+  <script src="./js/helpers.js?v=20260428-1"></script>
   <script src="./js/drive.js?v=20260428-1"></script>
   <script src="./js/ai.js?v=20260428-1"></script>
   <script src="./js/app.js?v=20260428-1"></script>

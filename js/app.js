@@ -50,6 +50,7 @@ const el = {
   sleepingRoot: document.getElementById('sleepingRoot'),
   recoveryArchiveRoot: document.getElementById('recoveryArchiveRoot'),
   tipsRoot: document.getElementById('tipsRoot'),
+  routineRoot: document.getElementById('routineRoot'),
 
   muscleGroupSelect: document.getElementById('muscleGroupSelect'),
   exerciseSelect: document.getElementById('exerciseSelect'),
@@ -122,6 +123,7 @@ const el = {
   sleepTimingCanvas: document.getElementById('sleepTimingCanvas'),
 
   tipsList: document.getElementById('tipsList'),
+  routineList: document.getElementById('routineList'),
 
   openSetupBtn: document.getElementById('openSetupBtn'),
   driveSyncBtn: document.getElementById('driveSyncBtn'),
@@ -971,6 +973,36 @@ function renderTips() {
   `).join('');
 }
 
+function renderRoutine() {
+  if (!el.routineList) return;
+
+  const items = Array.isArray(window.ROUTINE_DATA) ? window.ROUTINE_DATA : [];
+
+  if (!items.length) {
+    el.routineList.innerHTML = `
+      <div class="routine-card">
+        <div class="routine-time">未設定</div>
+        <div class="routine-action">Routine が読み込まれていません。</div>
+        <div class="routine-evidence">js/constants.js の <code>window.ROUTINE_DATA</code> を確認してください。</div>
+      </div>
+    `;
+    return;
+  }
+
+  el.routineList.innerHTML = items.map(item => `
+    <div class="routine-card">
+      <div class="routine-time">${item.time || '-'}</div>
+      <div class="routine-action">${item.action || '-'}</div>
+      <div class="routine-evidence">
+        <div><strong>根拠主張:</strong> ${item.claim || '-'}</div>
+        <div><strong>実験・レビュー内容:</strong> ${item.method || '-'}</div>
+        <div><strong>結果:</strong> ${item.result || '-'}</div>
+        <div class="routine-source"><strong>文献:</strong> ${item.source || '-'}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
 function renderMainTabs() {
   document.querySelectorAll('[data-main-tab]').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.mainTab === state.mainTab);
@@ -984,6 +1016,7 @@ function renderMainTabs() {
   el.sleepingRoot.classList.add('hidden');
   el.recoveryArchiveRoot.classList.add('hidden');
   el.tipsRoot.classList.add('hidden');
+  el.routineRoot.classList.add('hidden');
 
   if (state.mainTab === 'training') {
     if (state.trainingSubTab === 'workout') el.workoutRoot.classList.remove('hidden');
@@ -993,6 +1026,8 @@ function renderMainTabs() {
     if (state.recoverySubTab === 'archive') el.recoveryArchiveRoot.classList.remove('hidden');
   } else if (state.mainTab === 'tips') {
     el.tipsRoot.classList.remove('hidden');
+  } else if (state.mainTab === 'routine') {
+    el.routineRoot.classList.remove('hidden');
   }
 
   document.querySelectorAll('[data-training-subtab]').forEach(btn => {
@@ -1288,6 +1323,7 @@ async function initializeApp() {
   renderSleepArchiveDetail();
   renderSleepArchiveCharts();
   renderTips();
+  renderRoutine();
 
   if (!state.profile || (!state.profile.height && !localStorage.getItem('liftflow-profile'))) {
     openSetupModal();
@@ -1301,6 +1337,9 @@ document.querySelectorAll('[data-main-tab]').forEach(tab => {
 
     if (state.mainTab === 'tips') {
       renderTips();
+    }
+    if (state.mainTab === 'routine') {
+      renderRoutine();
     }
   });
 });

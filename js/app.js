@@ -889,13 +889,22 @@ function renderSleepArchiveCalendar() {
 
 function renderSleepArchiveDetail() {
   const rec = getPrimarySleepRecordForDate(state.selectedSleepArchiveDate);
+
   if (!rec) {
+    const defaultSleepAt = `${state.selectedSleepArchiveDate}T23:00`;
+    const nextDate = new Date(`${state.selectedSleepArchiveDate}T00:00:00`);
+    nextDate.setDate(nextDate.getDate() + 1);
+    const nextDateStr = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}-${String(nextDate.getDate()).padStart(2, '0')}`;
+
     el.sleepDetailSleepAt.textContent = '-';
     el.sleepDetailWakeAt.textContent = '-';
     el.sleepDetailDuration.textContent = '-';
-    el.sleepArchiveEditPanel.classList.add('hidden');
-    el.archiveEditSleepAt.value = '';
-    el.archiveEditWakeAt.value = '';
+    el.archiveEditSleepAt.value = defaultSleepAt;
+    el.archiveEditWakeAt.value = `${nextDateStr}T07:00`;
+
+    if (el.sleepArchiveEditToggleBtn) {
+      el.sleepArchiveEditToggleBtn.textContent = 'Add';
+    }
     return;
   }
 
@@ -905,6 +914,10 @@ function renderSleepArchiveDetail() {
 
   el.archiveEditSleepAt.value = toDatetimeLocalValue(rec.sleepAt);
   el.archiveEditWakeAt.value = toDatetimeLocalValue(rec.wakeAt);
+
+  if (el.sleepArchiveEditToggleBtn) {
+    el.sleepArchiveEditToggleBtn.textContent = 'Edit';
+  }
 }
 
 function renderSleepArchiveCharts() {
@@ -981,26 +994,62 @@ function renderRoutine() {
   if (!items.length) {
     el.routineList.innerHTML = `
       <div class="routine-card">
-        <div class="routine-time">未設定</div>
-        <div class="routine-action">Routine が読み込まれていません。</div>
-        <div class="routine-evidence">js/constants.js の <code>window.ROUTINE_DATA</code> を確認してください。</div>
+        <div class="routine-head">
+          <div class="routine-time">未設定</div>
+          <div class="routine-main">
+            <div class="routine-title">Routine が読み込まれていません</div>
+            <div class="routine-action">js/constants.js の <code>window.ROUTINE_DATA</code> を確認してください。</div>
+          </div>
+        </div>
       </div>
     `;
     return;
   }
 
-  el.routineList.innerHTML = items.map(item => `
-    <div class="routine-card">
-      <div class="routine-time">${item.time || '-'}</div>
-      <div class="routine-action">${item.action || '-'}</div>
-      <div class="routine-evidence">
-        <div><strong>根拠主張:</strong> ${item.claim || '-'}</div>
-        <div><strong>実験・レビュー内容:</strong> ${item.method || '-'}</div>
-        <div><strong>結果:</strong> ${item.result || '-'}</div>
-        <div class="routine-source"><strong>文献:</strong> ${item.source || '-'}</div>
-      </div>
+  el.routineList.innerHTML = `
+    <div class="routine-flow">
+      ${items.map((item, index) => `
+        <div class="routine-card">
+          <div class="routine-head">
+            <div class="routine-time">${item.time || '-'}</div>
+            <div class="routine-main">
+              <div class="routine-title">${item.title || item.phase || '実行項目'}</div>
+              <div class="routine-action">${item.action || '-'}</div>
+            </div>
+          </div>
+          <button class="routine-detail-toggle" type="button" data-routine-toggle="${index}">根拠を表示</button>
+          <div class="routine-evidence hidden" id="routine-evidence-${index}">
+            <div class="routine-evidence-item">
+              <div class="routine-evidence-label">根拠主張</div>
+              <div class="routine-evidence-text">${item.claim || '-'}</div>
+            </div>
+            <div class="routine-evidence-item">
+              <div class="routine-evidence-label">実験・レビュー内容</div>
+              <div class="routine-evidence-text">${item.method || '-'}</div>
+            </div>
+            <div class="routine-evidence-item">
+              <div class="routine-evidence-label">結果</div>
+              <div class="routine-evidence-text">${item.result || '-'}</div>
+            </div>
+            <div class="routine-evidence-item">
+              <div class="routine-evidence-label">文献</div>
+              <div class="routine-evidence-text">${item.source || '-'}</div>
+            </div>
+          </div>
+        </div>
+      `).join('')}
     </div>
-  `).join('');
+  `;
+
+  el.routineList.querySelectorAll('[data-routine-toggle]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const panel = document.getElementById(`routine-evidence-${btn.dataset.routineToggle}`);
+      if (!panel) return;
+      const shouldOpen = panel.classList.contains('hidden');
+      panel.classList.toggle('hidden', !shouldOpen);
+      btn.textContent = shouldOpen ? '根拠を閉じる' : '根拠を表示';
+    });
+  });
 }
 
 function renderMainTabs() {
@@ -1249,7 +1298,6 @@ async function handleManualSleepSave() {
 
 async function saveArchiveSleepEdit() {
   const rec = getPrimarySleepRecordForDate(state.selectedSleepArchiveDate);
-  if (!rec) return;
 
   const sleepAtVal = el.archiveEditSleepAt.value;
   const wakeAtVal = el.archiveEditWakeAt.value;
@@ -1259,9 +1307,13 @@ async function saveArchiveSleepEdit() {
   const wakeAt = new Date(wakeAtVal).toISOString();
   if (new Date(wakeAt) <= new Date(sleepAt)) return;
 
-  state.sleepRecords = state.sleepRecords.map(r =>
-    r.id === rec.id ? buildSleepRecord({ ...r, sleepAt, wakeAt, source: r.source }) : r
-  );
+  if (rec) {
+    state.sleepRecords = state.sleepRecords.map(r =>
+      r.id === rec.id ? buildSleepRecord({ ...r, sleepAt, wakeAt, source: r.source }) : r
+    );
+  } else {
+    state.sleepRecords.push(buildSleepRecord({ sleepAt, wakeAt, source: 'archive' }));
+  }
 
   saveSleepLocal();
   renderSleepRecentList();
